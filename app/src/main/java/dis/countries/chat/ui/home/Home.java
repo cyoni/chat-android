@@ -57,10 +57,10 @@ public class Home extends AppCompatActivity {
         Controller.mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
-    private Task<String> addMessage(String text) {
+    private Task<String> addMessage(final String nickname) {
         // Create the arguments to the callable function.
         Map<String, Object> data = new HashMap<>();
-        data.put("nickname", text);
+        data.put("nickname", nickname);
 
         return Controller.mFunctions
                 .getHttpsCallable("register")
@@ -73,23 +73,22 @@ public class Home extends AppCompatActivity {
                         // propagated down.
                         String result = (String) task.getResult().getData();
                         if (!result.equals("busy")){
-                            login(result);
+                            login(nickname, result);
                         }
                         else{
                             System.out.println("error");
                         }
-                        System.out.println("result" + result);
                         return result;
                     }
                 });
     }
 
-    private void login(final String id) {
-
-        Controller.mDatabase.child("users").setValue("") ;
+    private void login(final String nickname, final String token) {
 
         Intent intent = new Intent(this, Conversation.class);
-        intent.putExtra("token", id);
+        intent.putExtra("token", token);
+        intent.putExtra("nickname", nickname);
+
         startActivity(intent);
         finish();
     }

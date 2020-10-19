@@ -6,31 +6,47 @@
     android:layout_height="match_parent"
     tools:context=".ui.chat.Conversation">
 
-    <androidx.recyclerview.widget.RecyclerView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
-
-        <EditText
+        <RelativeLayout
+            android:id="@+id/layout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_width="0dp"
-            android:hint="Your message..."
-            android:layout_weight="1"
-            android:id="@+id/editText">
-        </EditText>
+            android:layout_above="@id/input_layout">
 
-        <Button
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycleView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:id="@+id/sendButton"
-            android:text="Send">
-        </Button>
+            android:layout_alignParentBottom="true"
+            android:id="@+id/input_layout">
 
-    </LinearLayout>
+            <EditText
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:hint="Your message..."
+                android:layout_weight="1"
+                android:id="@+id/message">
+            </EditText>
+
+            <Button
+                android:id="@+id/sendMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.Button"
+                app:backgroundTint="#3F51B5"
+                android:text="Send"/>
+        </LinearLayout>
+
+    </RelativeLayout>
 </RelativeLayout>
+
+
