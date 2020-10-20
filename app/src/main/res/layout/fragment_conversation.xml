@@ -6,21 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".ui.chat.Conversation">
 
+
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
 
         <RelativeLayout
             android:id="@+id/layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:layout_above="@id/input_layout">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycleView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
-
         </RelativeLayout>
 
         <LinearLayout

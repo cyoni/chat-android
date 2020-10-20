@@ -1,12 +1,14 @@
 package dis.countries.chat.ui.chat;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -26,10 +28,11 @@ import java.util.TimerTask;
 
 import dis.countries.chat.Controller;
 import dis.countries.chat.Item;
+import dis.countries.chat.MainActivity;
 import dis.countries.chat.R;
 import dis.countries.chat.RecyclerViewAdapter;
 
-public class Conversation extends AppCompatActivity {
+public class Conversation extends Fragment {
 
     RecyclerViewAdapter adapter;
     Button sendButton;
@@ -38,22 +41,22 @@ public class Conversation extends AppCompatActivity {
     RecyclerView recyclerView;
     String my_nickname, myToken;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_conversation);
-        sendButton = findViewById(R.id.sendMessage);
-        txt_message = findViewById(R.id.message);
-        recyclerView = findViewById(R.id.recycleView);
+    public Conversation(String token, String nickname){
+        this.myToken = token;
+        this.my_nickname = nickname;
+    }
 
-        my_nickname = getIntent().getStringExtra("nickname");
-        myToken = getIntent().getStringExtra("token");
 
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_conversation, container, false);
+
+        sendButton = root.findViewById(R.id.sendMessage);
+        txt_message = root.findViewById(R.id.message);
+        recyclerView = root.findViewById(R.id.recycleView);
 
         setRecycleview();
-
         startListening();
-        keepMeAlive();
+
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,24 +64,12 @@ public class Conversation extends AppCompatActivity {
                 sendMessage();
             }
         });
+        return root;
     }
 
-    private void keepMeAlive() {
-
-        Timer myTimer = new Timer();
-        myTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                long now = System.currentTimeMillis();
-                Controller.mDatabase.getRef().child("users").child(my_nickname).child("timestamp").setValue(now);
-            }
-        }, 0, 10000);
-
-
-    }
 
     private void startListening() {
-        Controller.mDatabase.child("messages").child(myToken).addValueEventListener(new ValueEventListener() {
+        Controller.mDatabase.child("messages").child(MainActivity.myToken).addValueEventListener(new ValueEventListener() {
 
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -122,8 +113,8 @@ public class Conversation extends AppCompatActivity {
     }
 
     private void setRecycleview() {
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new RecyclerViewAdapter(this, messages);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter = new RecyclerViewAdapter(getContext(), messages);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
     }

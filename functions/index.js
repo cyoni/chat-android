@@ -5,6 +5,7 @@ const functions = require('firebase-functions');
 // The Firebase Admin SDK to access Cloud Firestore.
 const admin = require('firebase-admin');
 admin.initializeApp();
+const defaultRoom = "lobby";
 
 function makeToken(length) {
     var result = '';
@@ -16,19 +17,43 @@ function makeToken(length) {
     return result;
 }
 
-function sendMessageToAudience(nickname, message, type){
-    return admin.database().ref("users").once('value').then(snapshot => {
-        snapshot.forEach(childSnapshot => {
-            const userToken = childSnapshot.child("token").val()
-            admin.database().ref("messages").child(userToken).push({
-                sender: nickname,
-                message: message,
-                type: type,
-                timestamp: Date.now()
+async function getToken(nickname) {
+    return admin.database().ref("users").child(nickname).once('value').then(res => {
+        return res.child("token")
+    })
+}
+
+async function sendMessageToAudience(room, sender, message, type) {
+    return admin.database().ref("rooms").child(room).once('value').then(res => {
+
+        res.forEach(snapshot => {
+            const nickname = snapshot.key
+            console.log("nickname: " + nickname)
+            
+            return admin.database().ref("users").child(nickname).once('value').then(snapshot2 => {
+                const userToken = snapshot2.child("token").val()
+                if (userToken !== null){
+
+                    console.log("userToken: " + userToken )
+
+
+                    admin.database().ref("messages").child(userToken).push({
+                        sender: sender,
+                        message: message,
+                        type: type,
+                        timestamp: Date.now()
+                    })
+              }
+  
+                return null
             })
+
+
+
         })
         return null
     })
+   
 }
 
 
@@ -39,23 +64,31 @@ exports.register = functions.https.onCall(async (request, context) => {
 
     const isUserAlive = await reference.once('value')
 
-        if (!isUserAlive.exists()) {
 
-            const token = makeToken(20);
+    if (!isUserAlive.exists()) {
 
-            const query = admin.database().ref("users").child(nickname).set({
-                nickname: nickname,
-                token: token,
-                timestamp: Date.now()
-            })
-            await query
-            await sendMessageToAudience("", `** ${nickname} joined the conversation **`, "announcement")
+        const token = makeToken(20);
+        const query = admin.database().ref("users").child(nickname).set({
+            nickname: nickname,
+            token: token,
+            room: defaultRoom,
+            timestamp: Date.now()
+        })
 
-            return token
-        }
-        else {
-            return "busy"
-        }
+
+        const joiningRoom = admin.database().ref("rooms").child(defaultRoom).child(nickname).set({
+            timestamp: Date.now()
+        })
+
+        await joiningRoom
+        await query
+        await sendMessageToAudience(defaultRoom, "", `** ${nickname} joined the conversation **`, "announcement")
+
+        return token
+    }
+    else {
+        return "busy"
+    }
 })
 
 
@@ -66,24 +99,23 @@ exports.sendMessage = functions.https.onCall(async (request, context) => {
     const token = request.token
     const message = request.message
 
-    const reference = admin.database().ref("users").child(nickname).child("token")
+    const reference = admin.database().ref("users").child(nickname)
+    const account = await reference.child("token").once('value')
 
-    const auth = await reference.once('value').then(snapshot => {
-        return snapshot.val() === token
-    })
-
-    if (!auth) {
+    if (account.child('token').val() === token) {
         return "AUTH-FAILED"
     }
 
-    await sendMessageToAudience(nickname, message, "regular")
+    const getRoomName = account.child('room').val()
 
-    return "OK"    
+    await sendMessageToAudience(getRoomName, nickname, message, "regular")
+
+    return "OK"
 })
 
 
 exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (context) => {
-    
+
     const now = Date.now()
 
     return admin.database().ref("users").once('value').then(snapshot => {
@@ -91,12 +123,16 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
             const current_user = childSnapshot.key
             const lastSeen = childSnapshot.child("timestamp").val()
             const current_token_user = childSnapshot.child("token").val()
-            if (now - lastSeen > 60000){
+            const current_room = childSnapshot.child("room").val()
+
+            if (now - lastSeen > 60000) {
                 admin.database().ref("users").child(current_user).remove()
                 admin.database().ref("messages").child(current_token_user).remove()
-                sendMessageToAudience("", `** ${current_user} left the conversation **`, "announcement")
+                admin.database().ref("rooms").child(current_room).child(current_user).remove()
+
+                sendMessageToAudience(current_room, "", `** ${current_user} left the conversation **`, "announcement")
             }
         })
         return null
     })
-  });
+});

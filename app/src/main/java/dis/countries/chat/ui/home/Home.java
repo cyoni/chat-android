@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dis.countries.chat.Controller;
+import dis.countries.chat.MainActivity;
 import dis.countries.chat.R;
 import dis.countries.chat.ui.chat.Conversation;
 
@@ -85,7 +86,8 @@ public class Home extends AppCompatActivity {
 
     private void login(final String nickname, final String token) {
 
-        Intent intent = new Intent(this, Conversation.class);
+
+        Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("token", token);
         intent.putExtra("nickname", nickname);
 
