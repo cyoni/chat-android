@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
@@ -24,22 +26,36 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     // inflates the row layout from xml when needed
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.item, parent, false);
         return new ViewHolder(view);
     }
 
     // binds the data to the TextView in each row
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String message = mData.get(position).getMessage();
         String nickname = mData.get(position).getNickname();
-        boolean isAnnouncement = mData.get(position).getIsAnnouncement();
-        if (isAnnouncement){
-            holder.myTextView.setText(message);
+        String msgType = mData.get(position).getMsgType();
+
+        if (msgType.equals("leave")){
+            broadcast(holder, "** " + nickname + " has left the room **");
+            Participants.remove(nickname);
+        } else if (msgType.equals("join")){
+            broadcast(holder, "** " + nickname + " has joined the room **");
+            Participants.add(nickname);
+        } else if (msgType.equals("status")) {
+            broadcast(holder, nickname);
         }
-        else
-            holder.myTextView.setText(nickname + ": " + message);
+        else{
+            System.out.println(msgType + "!!!!!!!!!!!!!");
+            String msg = nickname + ": " + message;
+            broadcast(holder, msg);
+        }
+    }
+
+    private void broadcast(ViewHolder holder, String msg) {
+        holder.myTextView.setText(msg);
     }
 
     // total number of rows

@@ -23,37 +23,44 @@ async function getToken(nickname) {
     })
 }
 
-async function sendMessageToAudience(room, sender, message, type) {
-    return admin.database().ref("rooms").child(room).once('value').then(res => {
+function sendM(recipient, sender, message, type){
+    
 
+    return admin.database().ref("users").child(recipient).once('value').then(snapshot2 => {
+        const userToken = snapshot2.child("token").val()
+        if (userToken !== null){
+            console.log("userToken: " + userToken )
+            admin.database().ref("messages").child(userToken).push({
+                sender: sender,
+                message: message,
+                type: type,
+                timestamp: Date.now()
+            })
+      }
+        return null
+    })
+
+}
+
+async function sendMessageToAudience(room, sender, message, type) {
+   
+    var nicknameArray = []
+   await admin.database().ref("rooms").child(room).once('value').then(res => {
         res.forEach(snapshot => {
             const nickname = snapshot.key
             console.log("nickname: " + nickname)
-            
-            return admin.database().ref("users").child(nickname).once('value').then(snapshot2 => {
-                const userToken = snapshot2.child("token").val()
-                if (userToken !== null){
-
-                    console.log("userToken: " + userToken )
-
-
-                    admin.database().ref("messages").child(userToken).push({
-                        sender: sender,
-                        message: message,
-                        type: type,
-                        timestamp: Date.now()
-                    })
-              }
-  
-                return null
-            })
-
-
+            nicknameArray.push(nickname)
 
         })
         return null
     })
-   
+
+    for (var i=0; i<nicknameArray.length; i++){
+        const current_nickname = nicknameArray[i]
+        sendM(current_nickname, sender, message, type)
+
+    }
+    
 }
 
 
@@ -82,7 +89,7 @@ exports.register = functions.https.onCall(async (request, context) => {
 
         await joiningRoom
         await query
-        await sendMessageToAudience(defaultRoom, "", `** ${nickname} joined the conversation **`, "announcement")
+        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} joined the conversation **`, "join")
 
         return token
     }
@@ -100,16 +107,15 @@ exports.sendMessage = functions.https.onCall(async (request, context) => {
     const message = request.message
 
     const reference = admin.database().ref("users").child(nickname)
-    const account = await reference.child("token").once('value')
+    const account = await reference.once('value')
 
-    if (account.child('token').val() === token) {
+    if (!account.child('token').val() === token) {
         return "AUTH-FAILED"
     }
 
     const getRoomName = account.child('room').val()
-
+    console.log("room: " + getRoomName)
     await sendMessageToAudience(getRoomName, nickname, message, "regular")
-
     return "OK"
 })
 
@@ -125,12 +131,12 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
             const current_token_user = childSnapshot.child("token").val()
             const current_room = childSnapshot.child("room").val()
 
-            if (now - lastSeen > 60000) {
+            if (now - lastSeen > 30000) {
                 admin.database().ref("users").child(current_user).remove()
                 admin.database().ref("messages").child(current_token_user).remove()
                 admin.database().ref("rooms").child(current_room).child(current_user).remove()
 
-                sendMessageToAudience(current_room, "", `** ${current_user} left the conversation **`, "announcement")
+                sendMessageToAudience(current_room, current_user, `** ${current_user} left the conversation **`, "leave")
             }
         })
         return null

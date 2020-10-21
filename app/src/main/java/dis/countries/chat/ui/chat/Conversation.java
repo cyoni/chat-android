@@ -44,6 +44,7 @@ public class Conversation extends Fragment {
     public Conversation(String token, String nickname){
         this.myToken = token;
         this.my_nickname = nickname;
+        startListening();
     }
 
 
@@ -55,8 +56,6 @@ public class Conversation extends Fragment {
         recyclerView = root.findViewById(R.id.recycleView);
 
         setRecycleview();
-        startListening();
-
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -92,18 +91,12 @@ public class Conversation extends Fragment {
                     messages.add(item);
                     recyclerView.scrollToPosition(messages.size()-1);
                     adapter.notifyItemInserted(messages.size()-1);
-
                     deleteMsg(msgId);
-
                 }
-
-
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
@@ -126,7 +119,7 @@ public class Conversation extends Fragment {
       //  adapter.notifyDataSetChanged();
 
         txt_message.setText("");
-
+    System.out.println("my token: " + myToken);
         Map<String, Object> data = new HashMap<>();
         data.put("message", message);
         data.put("token", myToken);

@@ -23,4 +23,8 @@ public class Item {
     public boolean getIsAnnouncement() {
         return msgType.equals("announcement");
     }
+
+    public String getMsgType(){
+        return msgType;
+    }
 }
