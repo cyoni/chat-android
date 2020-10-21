@@ -69,7 +69,7 @@ public class Participants extends Fragment {
                     //HashMap<String, Object> dataMap = (HashMap<String, Object>) tmp.getValue();
 
                     String nickname = tmp.getKey();
-             ;
+
                     participants.add ( new Item(nickname, "", "status"));
                     adapter.notifyItemInserted(participants.size()-1);
                 }

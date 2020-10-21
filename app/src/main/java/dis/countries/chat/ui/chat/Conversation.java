@@ -21,6 +21,7 @@ import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
@@ -40,6 +41,7 @@ public class Conversation extends Fragment {
     EditText txt_message;
     RecyclerView recyclerView;
     String my_nickname, myToken;
+    HashSet<String> messageTracker = new HashSet<>();
 
     public Conversation(String token, String nickname){
         this.myToken = token;
@@ -56,7 +58,7 @@ public class Conversation extends Fragment {
         recyclerView = root.findViewById(R.id.recycleView);
 
         setRecycleview();
-
+        scrollRecyclerview();
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -64,6 +66,19 @@ public class Conversation extends Fragment {
             }
         });
         return root;
+    }
+
+    private void scrollRecyclerview(){
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if (!recyclerView.canScrollVertically(1)){
+                    MainActivity.removeBadge();
+                }
+            }
+        });
     }
 
 
@@ -83,15 +98,28 @@ public class Conversation extends Fragment {
                     HashMap<String, Object> dataMap = (HashMap<String, Object>) tmp.getValue();
 
                     String msgId = tmp.getKey();
-                    String message = (String) dataMap.get("message");
-                    String nickname = (String) dataMap.get("sender");
-                    String messageType = (String) dataMap.get("type");
 
-                    Item item = new Item(nickname, message, messageType);
-                    messages.add(item);
-                    recyclerView.scrollToPosition(messages.size()-1);
-                    adapter.notifyItemInserted(messages.size()-1);
-                    deleteMsg(msgId);
+                    if (!messageTracker.contains(msgId)) {
+
+                        String message = (String) dataMap.get("message");
+                        String nickname = (String) dataMap.get("sender");
+                        String messageType = (String) dataMap.get("type");
+
+                        Item item = new Item(nickname, message, messageType);
+                        messages.add(item);
+                        messageTracker.add(msgId);
+
+                        if (!MainActivity.imOnConversationTab || recyclerView.canScrollVertically(1)){
+                            MainActivity.setBadge();
+                            adapter.notifyItemInserted(messages.size() - 1);
+                        }
+                        else {
+                            MainActivity.removeBadge();
+                            adapter.notifyItemInserted(messages.size() - 1);
+                            recyclerView.scrollToPosition(messages.size() - 1);
+                        }
+                        deleteMsg(msgId);
+                    }
                 }
             }
 
@@ -102,7 +130,6 @@ public class Conversation extends Fragment {
 
     private void deleteMsg(String msgId) {
         Controller.mDatabase.child("messages").child(myToken).child(msgId).setValue(null);
-        System.out.println("token " + myToken + ", msgid: " + msgId);
     }
 
     private void setRecycleview() {
