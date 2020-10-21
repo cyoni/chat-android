@@ -13,7 +13,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 
 
@@ -29,8 +28,8 @@ public class Participants extends Fragment {
 
     public static void add(String nickname) {
         if (!nickname.equals(MainActivity.my_nickname)) {
-            participants.add(0,new Item(nickname, "#", "status"));
-            adapter.notifyItemInserted(0);
+            participants.add(new Item(nickname, "#", "status"));
+            adapter.notifyItemInserted(participants.size()-1);
         }
     }
 
@@ -73,6 +72,7 @@ public class Participants extends Fragment {
                     participants.add ( new Item(nickname, "", "status"));
                     adapter.notifyItemInserted(participants.size()-1);
                 }
+                MainActivity.updateOnlineTitle();
             }
 
             @Override
@@ -89,10 +89,9 @@ public class Participants extends Fragment {
 
         setRecycleview();
 
-        if (participants.isEmpty())
+        if (participants.isEmpty()){
             getParticipants();
-        else
-            System.out.println("@@@@ " + participants.size());
+        }
 
         return root;
 

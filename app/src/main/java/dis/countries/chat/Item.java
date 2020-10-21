@@ -4,7 +4,7 @@ public class Item {
 
     final String nickname;
     final String message;
-    final String msgType;
+    String msgType;
 
     public Item(String nickname, String message, String msgType){
         this.nickname = nickname;
@@ -26,5 +26,9 @@ public class Item {
 
     public String getMsgType(){
         return msgType;
+    }
+
+    public void setMsgData(String s) {
+        this.msgType = s;
     }
 }

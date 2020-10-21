@@ -27,9 +27,11 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import dis.countries.chat.Animator;
 import dis.countries.chat.Controller;
 import dis.countries.chat.Item;
 import dis.countries.chat.MainActivity;
+import dis.countries.chat.Participants;
 import dis.countries.chat.R;
 import dis.countries.chat.RecyclerViewAdapter;
 
@@ -100,7 +102,6 @@ public class Conversation extends Fragment {
                     String msgId = tmp.getKey();
 
                     if (!messageTracker.contains(msgId)) {
-
                         String message = (String) dataMap.get("message");
                         String nickname = (String) dataMap.get("sender");
                         String messageType = (String) dataMap.get("type");
@@ -108,6 +109,17 @@ public class Conversation extends Fragment {
                         Item item = new Item(nickname, message, messageType);
                         messages.add(item);
                         messageTracker.add(msgId);
+
+                        if (messageType.equals("leave")){
+                            Participants.remove(nickname);
+                            MainActivity.updateOnlineTitle();
+                        } else if (messageType.equals("join")){
+                            Participants.add(nickname);
+                            MainActivity.updateOnlineTitle();
+                        }
+
+                        if (!MainActivity.imOnPeopleTab && messageType.equals("join") && !nickname.equals(MainActivity.my_nickname))
+                            MainActivity.participantsSetBadge();
 
                         if (!MainActivity.imOnConversationTab || recyclerView.canScrollVertically(1)){
                             MainActivity.setBadge();
@@ -141,12 +153,18 @@ public class Conversation extends Fragment {
 
     private void sendMessage() {
 
-        String message = txt_message.getText().toString();
+        String message = txt_message.getText().toString().trim();
+
+        if (message.isEmpty()){
+            Animator.shake(txt_message);
+            Animator.shake(sendButton);
+            return;
+        }
       //  messages.add(new Item(my_nickname, message));
       //  adapter.notifyDataSetChanged();
 
         txt_message.setText("");
-    System.out.println("my token: " + myToken);
+        System.out.println("my token: " + myToken);
         Map<String, Object> data = new HashMap<>();
         data.put("message", message);
         data.put("token", myToken);

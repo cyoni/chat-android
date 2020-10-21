@@ -66,9 +66,8 @@ async function sendMessageToAudience(room, sender, message, type) {
 
 exports.register = functions.https.onCall(async (request, context) => {
 
-    const nickname = request.nickname;
+    const nickname = request.nickname.trim();
     const reference = await admin.database().ref("users").child(nickname);
-
     const isUserAlive = await reference.once('value')
 
 
@@ -126,6 +125,7 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
 
     return admin.database().ref("users").once('value').then(snapshot => {
         snapshot.forEach(childSnapshot => {
+
             const current_user = childSnapshot.key
             const lastSeen = childSnapshot.child("timestamp").val()
             const current_token_user = childSnapshot.child("token").val()
@@ -142,3 +142,27 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
         return null
     })
 });
+
+function removeMe(nickname, token, room){
+
+    admin.database().ref("users").child(nickname).remove()
+    admin.database().ref("messages").child(token).remove()
+    admin.database().ref("rooms").child(room).child(nickname).remove()
+
+    sendMessageToAudience(room, nickname, `** ${nickname} has left the conversation **`, "leave")
+
+}
+
+exports.logOut = functions.https.onCall(async (request, context) => {
+
+    const token = request.token
+    const nickname = request.nickname
+
+    const auth = await admin.database().ref("users").child(nickname).once('value')
+    if (auth.child("token").val() !== token)
+        return "AUTH-FAILED"
+
+    const room = auth.child("room").val()
+    return removeMe(nickname, token, room)
+
+})

@@ -38,17 +38,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         String nickname = mData.get(position).getNickname();
         String msgType = mData.get(position).getMsgType();
 
-        if (msgType.equals("leave")){
-            broadcast(holder, "** " + nickname + " has left the room **");
-            Participants.remove(nickname);
-        } else if (msgType.equals("join")){
-            broadcast(holder, "** " + nickname + " has joined the room **");
-            Participants.add(nickname);
+
+         if (msgType.equals("join") || msgType.equals("leave")){
+             broadcast(holder, message);
         } else if (msgType.equals("status")) {
             broadcast(holder, nickname);
         }
         else{
-            System.out.println(msgType + "!!!!!!!!!!!!!");
             String msg = nickname + ": " + message;
             broadcast(holder, msg);
         }

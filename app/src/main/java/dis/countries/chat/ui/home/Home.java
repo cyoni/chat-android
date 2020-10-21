@@ -1,6 +1,6 @@
 package dis.countries.chat.ui.home;
 
-import android.content.Context;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -8,15 +8,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.text.Html;
 import android.view.View;
 
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.agrawalsuneet.dotsloader.loaders.TashieLoader;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.HttpsCallableResult;
@@ -24,12 +26,18 @@ import com.google.firebase.functions.HttpsCallableResult;
 import java.util.HashMap;
 import java.util.Map;
 
+import dis.countries.chat.Animator;
 import dis.countries.chat.Controller;
 import dis.countries.chat.MainActivity;
 import dis.countries.chat.R;
-import dis.countries.chat.ui.chat.Conversation;
+import dis.countries.chat.toast;
 
 public class Home extends AppCompatActivity {
+
+    TashieLoader loader;
+    TextInputLayout container;
+    Button loginButton;
+    EditText input_nickname;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,19 +46,39 @@ public class Home extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        loader = findViewById(R.id.loader);
+        container = findViewById(R.id.container);
+        loginButton = findViewById(R.id.button);
+        input_nickname = findViewById(R.id.nickname);
 
+        setActionbar();
         setFirebase();
-        Button buttun = findViewById(R.id.button);
+        setOnListener();
+    }
 
-
-        buttun.setOnClickListener(new View.OnClickListener() {
+    private void setOnListener() {
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EditText txt_nickname = findViewById(R.id.nickname);
-                String nickname = txt_nickname.getText().toString();
-                addMessage(nickname);
+                String nick = input_nickname.getText().toString();
+                applyAnimation();
+                validateNickname();
+                logIn(nick);
             }
         });
+    }
+
+    private void validateNickname() {
+        if (input_nickname.getText().toString().trim().isEmpty()){
+            stopAnimation();
+            toast.showToast(getApplicationContext(), "Please enter a nickname");
+        }
+    }
+
+    private void setActionbar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(Html.fromHtml("<font color=\"#ffffff\">Chat</font>"));
     }
 
     private void setFirebase() {
@@ -58,8 +86,9 @@ public class Home extends AppCompatActivity {
         Controller.mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
-    private Task<String> addMessage(final String nickname) {
-        // Create the arguments to the callable function.
+    private Task<String> logIn(final String nickname) {
+
+
         Map<String, Object> data = new HashMap<>();
         data.put("nickname", nickname);
 
@@ -69,24 +98,41 @@ public class Home extends AppCompatActivity {
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override
                     public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                        // This continuation runs on either success or failure, but if the task
-                        // has failed then getResult() will throw an Exception which will be
-                        // propagated down.
                         String result = (String) task.getResult().getData();
-                        if (!result.equals("busy")){
-                            login(nickname, result);
+                        if (result == null || result.isEmpty()){
+                            toast.showToast(getApplicationContext(), "An error occurred (1)");
+                            stopAnimation();
                         }
-                        else{
-                            System.out.println("error");
+                        else if (result.equals("busy")){
+                            toast.showToast(getApplicationContext(), "Nickname is in use!");
+                            stopAnimation();
+                        }  else {
+                            login(nickname.trim(), result);
                         }
+
                         return result;
                     }
                 });
     }
 
+    private void stopAnimation() {
+        input_nickname.setVisibility(View.VISIBLE);
+        container.setVisibility(View.VISIBLE);
+        loginButton.setVisibility(View.VISIBLE);
+        loader.setVisibility(View.GONE);
+        Animator.shake(loginButton);
+        Animator.shake(container);
+    }
+
+    private void applyAnimation() {
+        loader.setVisibility(View.VISIBLE);
+        Controller.hideKeyboard(this);
+        input_nickname.setVisibility(View.INVISIBLE);
+        container.setVisibility(View.INVISIBLE);
+        loginButton.setVisibility(View.INVISIBLE);
+    }
+
     private void login(final String nickname, final String token) {
-
-
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("token", token);
         intent.putExtra("nickname", nickname);

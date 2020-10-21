@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+
     tools:context=".ui.home.Home">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -23,22 +24,52 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/nickname"
+        android:layout_below="@id/container"
         android:layout_alignParentEnd="true"
         android:layout_marginRight="20dp"
+
         android:text="Enter"
         android:layout_alignParentRight="true" />
 
 
 
-    <EditText
-        android:id="@+id/nickname"
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/container"
+        android:hint="Nickname"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_centerInParent="true"
+        app:endIconMode="clear_text">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/nickname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textVisiblePassword"
+            android:textColor="#292929"
+            android:textSize="30sp"
+            />
+
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.agrawalsuneet.dotsloader.loaders.TashieLoader
+        android:id="@+id/loader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
         android:layout_centerInParent="true"
-        android:textSize="30sp"
-        android:backgroundTint="#E91E63"
-        android:inputType="textVisiblePassword" />
+        app:tashieloader_animDelay="100"
+        app:tashieloader_animDur="500"
+        android:visibility="invisible"
+        app:tashieloader_dotsColor="#E91E63"
+        app:tashieloader_dotsDist="10dp"
+        app:tashieloader_dotsRadius="10dp"
+        app:tashieloader_interpolator="@android:anim/accelerate_interpolator"
+        app:tashieloader_noOfDots="10" />
+
 
 </RelativeLayout>

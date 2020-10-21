@@ -1,10 +1,57 @@
 package dis.countries.chat;
 
+import android.app.Activity;
+import android.content.Context;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Controller {
     public static DatabaseReference mDatabase;
     public static FirebaseFunctions mFunctions;
 
+
+    public static Task<String> logOut(final boolean withExit) {
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("nickname", MainActivity.my_nickname);
+        data.put("token", MainActivity.myToken);
+
+        return Controller.mFunctions
+                .getHttpsCallable("logOut")
+                .call(data)
+                .continueWith(new Continuation<HttpsCallableResult, String>() {
+                    @Override
+                    public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        if (withExit)
+                            System.exit(0);
+
+                        return null;
+                    }
+                });
+    }
+
+
+    public static void hideKeyboard(Activity activity) {
+        View view = activity.getCurrentFocus();
+        if (view != null){
+            InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            assert inputMethodManager != null;
+            inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    public static void exit() {
+        System.exit(0);
+    }
 }
