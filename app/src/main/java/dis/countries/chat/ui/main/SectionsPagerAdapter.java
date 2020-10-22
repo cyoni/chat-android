@@ -22,7 +22,7 @@ import dis.countries.chat.ui.home.Home;
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     @StringRes
-    private static final int[] TAB_TITLES = new int[]{R.string.tab_text_0, R.string.tab_text_1, R.string.tab_text_2};
+    private static final int[] TAB_TITLES = new int[]{R.string.tab_text_0, R.string.tab_text_1};
     private final Context mContext;
 
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
@@ -41,6 +41,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
                 return new Rooms(MainActivity.myToken, MainActivity.my_nickname);
             case 3:
                 return new Rooms(MainActivity.myToken, MainActivity.my_nickname);
+
             default:
                 return null;
         }
@@ -54,6 +55,6 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public int getCount() {
-        return 3;
+        return 2;
     }
 }

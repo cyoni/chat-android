@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import dis.countries.chat.Animator;
 import dis.countries.chat.Controller;
@@ -58,6 +56,13 @@ public class Conversation extends Fragment {
         sendButton = root.findViewById(R.id.sendMessage);
         txt_message = root.findViewById(R.id.message);
         recyclerView = root.findViewById(R.id.recycleView);
+
+        txt_message.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                MainActivity.showOrHideBottom(false);
+            }
+        });
 
         setRecycleview();
         scrollRecyclerview();

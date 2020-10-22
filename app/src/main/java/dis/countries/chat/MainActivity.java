@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.tabs.TabLayout;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
 import java.util.Timer;
@@ -33,9 +35,19 @@ public class MainActivity extends AppCompatActivity {
     public static void participantsSetBadge() {
          tabs.getTabAt(0).getOrCreateBadge();
     }
+    public static BottomNavigationView buttomMenu;
 
     public static void updateOnlineTitle() {
         tabs.getTabAt(PEOPLE).setText("ONLINE ("+ Participants.participants.size() +")");
+    }
+
+    public static void showOrHideBottom(boolean show) {
+        if (show){
+            buttomMenu.setVisibility(View.VISIBLE);
+            System.out.println("##");
+        }
+        else
+            buttomMenu.setVisibility(View.GONE);
     }
 
     @Override
@@ -52,9 +64,12 @@ public class MainActivity extends AppCompatActivity {
         tabs = findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
 
-
+        buttomMenu = findViewById(R.id.bottom_navigation);
         getData();
         keepMeAlive();
+
+     //   getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+
 
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -70,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (index != ConversationTab){
                     hideKeyboard();
+                    showOrHideBottom(true);
                     imOnConversationTab = false;
                 }
                 else {

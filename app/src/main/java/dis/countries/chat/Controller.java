@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 
@@ -15,6 +16,8 @@ import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import dis.countries.chat.ui.home.Home;
 
 public class Controller {
     public static DatabaseReference mDatabase;
@@ -53,5 +56,11 @@ public class Controller {
 
     public static void exit() {
         System.exit(0);
+    }
+
+    public static void showKeyboard(EditText inputText, Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputMethodManager != null)
+            inputMethodManager.showSoftInput(inputText, InputMethodManager.SHOW_IMPLICIT);
     }
 }

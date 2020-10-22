@@ -88,7 +88,7 @@ exports.register = functions.https.onCall(async (request, context) => {
 
         await joiningRoom
         await query
-        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} joined the conversation **`, "join")
+        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join")
 
         return token
     }
@@ -136,7 +136,7 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
                 admin.database().ref("messages").child(current_token_user).remove()
                 admin.database().ref("rooms").child(current_room).child(current_user).remove()
 
-                sendMessageToAudience(current_room, current_user, `** ${current_user} left the conversation **`, "leave")
+                sendMessageToAudience(current_room, current_user, `** ${current_user} has left the room **`, "leave")
             }
         })
         return null

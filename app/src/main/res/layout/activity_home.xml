@@ -38,7 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/container"
-        android:hint="Nickname"
+        android:hint="Enter your nickname"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:layout_centerInParent="true"
@@ -49,10 +49,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textVisiblePassword"
-            android:textColor="#292929"
-            android:textSize="30sp"
-            />
-
+            android:textColor="#4E4E4E"
+            android:textSize="30sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
 

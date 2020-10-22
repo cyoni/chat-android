@@ -71,7 +71,8 @@ public class Home extends AppCompatActivity {
     private void validateNickname() {
         if (input_nickname.getText().toString().trim().isEmpty()){
             stopAnimation();
-            toast.showToast(getApplicationContext(), "Please enter a nickname");
+            input_nickname.requestFocus();
+            Controller.showKeyboard(input_nickname,this);
         }
     }
 

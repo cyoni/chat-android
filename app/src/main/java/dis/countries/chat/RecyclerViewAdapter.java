@@ -2,6 +2,7 @@ package dis.countries.chat;
 
 
 import android.content.Context;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,13 +46,14 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             broadcast(holder, nickname);
         }
         else{
-            String msg = nickname + ": " + message;
+
+            String msg = "<font color=\"#454545\"><b>" + nickname + "</b></font>  " + message;
             broadcast(holder, msg);
         }
     }
 
     private void broadcast(ViewHolder holder, String msg) {
-        holder.myTextView.setText(msg);
+        holder.myTextView.setText(Html.fromHtml(msg));
     }
 
     // total number of rows
