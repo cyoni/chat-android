@@ -1,18 +1,24 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/page_1"
+        android:id="@+id/home"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_star_24"
         android:title="Home"/>
 
     <item
-        android:id="@+id/page_2"
+        android:id="@+id/chats"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_star_24"
         android:title="Chats"/>
 
     <item
-        android:id="@+id/page_3"
+        android:id="@+id/rooms"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_star_24"
+        android:title="Rooms"/>
+
+    <item
+        android:id="@+id/favorite"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_star_24"
         android:title="Favorite"/>

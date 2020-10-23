@@ -9,11 +9,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.text.Html;
+import android.view.KeyEvent;
 import android.view.View;
 
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.agrawalsuneet.dotsloader.loaders.TashieLoader;
 import com.google.android.gms.tasks.Continuation;
@@ -56,16 +59,34 @@ public class Home extends AppCompatActivity {
         setOnListener();
     }
 
+
+
     private void setOnListener() {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String nick = input_nickname.getText().toString();
-                applyAnimation();
-                validateNickname();
-                logIn(nick);
+                submitButtonClick();
             }
         });
+
+        input_nickname.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    submitButtonClick();
+                    return true;
+                }
+                return false;
+            }
+
+        });
+    }
+
+    private void submitButtonClick() {
+        String nick = input_nickname.getText().toString();
+        applyAnimation();
+        validateNickname();
+        logIn(nick);
     }
 
     private void validateNickname() {

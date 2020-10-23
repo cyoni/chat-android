@@ -2,6 +2,7 @@ package dis.countries.chat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -12,11 +13,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.CountDownTimer;
 import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 
 import java.util.Timer;
@@ -32,22 +34,21 @@ public class MainActivity extends AppCompatActivity {
     public static int NEW_MESSAGES = 0;
     public static boolean imOnConversationTab = true, imOnPeopleTab = false;
     private static int ConversationTab = 1, PEOPLE = 0;
+    private boolean busy = false;
+
     public static void participantsSetBadge() {
          tabs.getTabAt(0).getOrCreateBadge();
     }
     public static BottomNavigationView buttomMenu;
 
     public static void updateOnlineTitle() {
+
         tabs.getTabAt(PEOPLE).setText("ONLINE ("+ Participants.participants.size() +")");
+        tabs.getTabAt(ConversationTab).setText("Lobby");
     }
 
-    public static void showOrHideBottom(boolean show) {
-        if (show){
-            buttomMenu.setVisibility(View.VISIBLE);
-            System.out.println("##");
-        }
-        else
-            buttomMenu.setVisibility(View.GONE);
+    public static void setAlpha() {
+        buttomMenu.setAlpha(0);
     }
 
     @Override
@@ -61,21 +62,22 @@ public class MainActivity extends AppCompatActivity {
         ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
         viewPager.setCurrentItem(1);
+
         tabs = findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
-
         buttomMenu = findViewById(R.id.bottom_navigation);
+
         getData();
         keepMeAlive();
+       // hideOrShowBottomMenuWhenKeyboardAppears();
+        tabsListener();
+    }
 
-     //   getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
-
-
+    private void tabsListener() {
         tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int index = tab.getPosition();
-
 
                 if (index == PEOPLE){
                     tabs.getTabAt(0).removeBadge();
@@ -84,8 +86,8 @@ public class MainActivity extends AppCompatActivity {
                     imOnPeopleTab = false;
 
                 if (index != ConversationTab){
+
                     hideKeyboard();
-                    showOrHideBottom(true);
                     imOnConversationTab = false;
                 }
                 else {
@@ -104,7 +106,79 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
     }
+/*
+    public static void hideBottomMenu(){
+        buttomMenu.setVisibility(View.GONE);
+    }
+*/
+
+/*
+    private void hideOrShowBottomMenuWhenKeyboardAppears() {
+        final View constraintLayout = findViewById(R.id.relativelayout);
+        constraintLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Rect r = new Rect();
+                constraintLayout.getWindowVisibleDisplayFrame(r);
+                int screenHeight = constraintLayout.getRootView().getHeight();
+                int keypadHeight = screenHeight - r.bottom;
+                if (keypadHeight > screenHeight * 0.15) {
+                    hideBottomMenu();
+                    buttomMenu.setAlpha(0);
+                } else {
+                    if (buttomMenu.getAlpha() == 0){
+                        buttomMenu.setVisibility(View.VISIBLE);
+                        buttomMenu.animate().alpha(1.0f).setDuration(300).start();
+                    }
+                }
+            }
+        });
+    }
+*/
+
+    private void waitForASec() {
+        new CountDownTimer(500, 1000) {
+            public void onTick(long millisUntilFinished) {
+                //  editText.setText("Seconds remaining: " + millisUntilFinished / 1000);
+            }
+            public void onFinish() {
+                busy = false;
+            }
+        }.start();
+
+    }
+
+    private void hideKeyboardWithDelay() {
+
+
+
+        new CountDownTimer(10, 1000) {
+            public void onTick(long millisUntilFinished) {
+                //  editText.setText("Seconds remaining: " + millisUntilFinished / 1000);
+            }
+            public void onFinish() {
+
+               // buttomMenu.setVisibility(View.GONE);
+            }
+        }.start();
+    }
+
+    public static void showKeyboardWithDelay() {
+        //buttomMenu.setVisibility(View.VISIBLE);
+        buttomMenu.animate().alpha(1.0f).setDuration(3000).start();
+
+        new CountDownTimer(100, 1000) {
+            public void onTick(long millisUntilFinished) {
+              //  editText.setText("Seconds remaining: " + millisUntilFinished / 1000);
+            }
+            public void onFinish() {
+                //buttomMenu.setVisibility(View.VISIBLE);
+            }
+        }.start();
+    }
+
 
     private void setActionbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);

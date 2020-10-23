@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -35,13 +36,14 @@ import dis.countries.chat.RecyclerViewAdapter;
 
 public class Conversation extends Fragment {
 
-    RecyclerViewAdapter adapter;
-    Button sendButton;
-    ArrayList<Item> messages = new ArrayList<>();
-    EditText txt_message;
-    RecyclerView recyclerView;
-    String my_nickname, myToken;
-    HashSet<String> messageTracker = new HashSet<>();
+    private RecyclerViewAdapter adapter;
+    private Button sendButton;
+    private ArrayList<Item> messages = new ArrayList<>();
+    private EditText txt_message;
+    private RecyclerView recyclerView;
+    private String my_nickname, myToken;
+    private HashSet<String> messageTracker = new HashSet<>();
+    private int MsgCounterACK = 0;
 
     public Conversation(String token, String nickname){
         this.myToken = token;
@@ -57,22 +59,21 @@ public class Conversation extends Fragment {
         txt_message = root.findViewById(R.id.message);
         recyclerView = root.findViewById(R.id.recycleView);
 
-        txt_message.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean b) {
-                MainActivity.showOrHideBottom(false);
-            }
-        });
 
         setRecycleview();
         scrollRecyclerview();
+        setButtonListener();
+
+        return root;
+    }
+
+    private void setButtonListener() {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 sendMessage();
             }
         });
-        return root;
     }
 
     private void scrollRecyclerview(){
@@ -111,31 +112,26 @@ public class Conversation extends Fragment {
                         String nickname = (String) dataMap.get("sender");
                         String messageType = (String) dataMap.get("type");
 
-                        Item item = new Item(nickname, message, messageType);
-                        messages.add(item);
-                        messageTracker.add(msgId);
+                        if (!nickname.equals(my_nickname) || nickname.equals(my_nickname) && !messageType.equals("regular")) {
 
-                        if (messageType.equals("leave")){
-                            Participants.remove(nickname);
-                            MainActivity.updateOnlineTitle();
-                        } else if (messageType.equals("join")){
-                            Participants.add(nickname);
-                            MainActivity.updateOnlineTitle();
-                        }
+                            Item item = new Item(nickname, message, messageType);
+                            messages.add(item);
+                            messageTracker.add(msgId);
 
-                        if (!MainActivity.imOnPeopleTab && messageType.equals("join") && !nickname.equals(MainActivity.my_nickname))
-                            MainActivity.participantsSetBadge();
+                            if (messageType.equals("leave")) {
+                                Participants.remove(nickname);
+                                MainActivity.updateOnlineTitle();
+                            } else if (messageType.equals("join")) {
+                                Participants.add(nickname);
+                                MainActivity.updateOnlineTitle();
+                            }
 
-                        if (!MainActivity.imOnConversationTab || recyclerView.canScrollVertically(1)){
-                            MainActivity.setBadge();
-                            adapter.notifyItemInserted(messages.size() - 1);
+                            if (!MainActivity.imOnPeopleTab && messageType.equals("join") && !nickname.equals(MainActivity.my_nickname))
+                                MainActivity.participantsSetBadge();
+
+                            scrollDown();
+                            deleteMsg(msgId);
                         }
-                        else {
-                            MainActivity.removeBadge();
-                            adapter.notifyItemInserted(messages.size() - 1);
-                            recyclerView.scrollToPosition(messages.size() - 1);
-                        }
-                        deleteMsg(msgId);
                     }
                 }
             }
@@ -143,6 +139,17 @@ public class Conversation extends Fragment {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
+    }
+
+    private void scrollDown() {
+        if (!MainActivity.imOnConversationTab || recyclerView.canScrollVertically(1)) {
+            MainActivity.setBadge();
+            adapter.notifyItemInserted(messages.size() - 1);
+        } else {
+            MainActivity.removeBadge();
+            adapter.notifyItemInserted(messages.size() - 1);
+            recyclerView.scrollToPosition(messages.size() - 1);
+        }
     }
 
     private void deleteMsg(String msgId) {
@@ -165,8 +172,10 @@ public class Conversation extends Fragment {
             Animator.shake(sendButton);
             return;
         }
-      //  messages.add(new Item(my_nickname, message));
-      //  adapter.notifyDataSetChanged();
+        messages.add(new Item(my_nickname, message, "regular"));
+        adapter.notifyItemInserted(messages.size()-1);
+        MsgCounterACK++;
+        scrollDown();
 
         txt_message.setText("");
         System.out.println("my token: " + myToken);
@@ -174,6 +183,7 @@ public class Conversation extends Fragment {
         data.put("message", message);
         data.put("token", myToken);
         data.put("nickname", my_nickname);
+        data.put("MsgCounterACK", MsgCounterACK);
 
         Controller.mFunctions
                 .getHttpsCallable("sendMessage")
