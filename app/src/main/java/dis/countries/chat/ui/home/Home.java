@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import android.text.Html;
 import android.view.KeyEvent;
@@ -16,11 +17,13 @@ import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.agrawalsuneet.dotsloader.loaders.TashieLoader;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.functions.FirebaseFunctions;
@@ -109,6 +112,7 @@ public class Home extends AppCompatActivity {
     }
 
     private Task<String> logIn(final String nickname) {
+        final RelativeLayout relativeLayout = findViewById(R.id.screen);
 
 
         Map<String, Object> data = new HashMap<>();
@@ -125,8 +129,12 @@ public class Home extends AppCompatActivity {
                             toast.showToast(getApplicationContext(), "An error occurred (1)");
                             stopAnimation();
                         }
+                        else if(result.equals("INVALID-NICKNAME")){
+                            Controller.showSnackbar(relativeLayout, "Special characters are not allowed.");
+                            stopAnimation();
+                        }
                         else if (result.equals("busy")){
-                            toast.showToast(getApplicationContext(), "Nickname is in use!");
+                            Controller.showSnackbar(relativeLayout, "Nickname is in use!");
                             stopAnimation();
                         }  else {
                             login(nickname.trim(), result);
@@ -158,7 +166,6 @@ public class Home extends AppCompatActivity {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("token", token);
         intent.putExtra("nickname", nickname);
-
         startActivity(intent);
         finish();
     }

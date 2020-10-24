@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.HttpsCallableResult;
@@ -29,6 +30,9 @@ public class Controller {
         Map<String, Object> data = new HashMap<>();
         data.put("nickname", MainActivity.my_nickname);
         data.put("token", MainActivity.myToken);
+
+        MainActivity.my_nickname = null;
+        MainActivity.myToken = null;
 
         return Controller.mFunctions
                 .getHttpsCallable("logOut")
@@ -62,5 +66,10 @@ public class Controller {
         InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (inputMethodManager != null)
             inputMethodManager.showSoftInput(inputText, InputMethodManager.SHOW_IMPLICIT);
+    }
+
+    public static void showSnackbar(View layout, String msg) {
+        Snackbar snackbar = Snackbar.make(layout , msg, Snackbar.LENGTH_LONG);
+        snackbar.show();
     }
 }

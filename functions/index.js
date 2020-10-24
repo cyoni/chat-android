@@ -23,9 +23,8 @@ async function getToken(nickname) {
     })
 }
 
-function sendM(recipient, sender, message, type){
+function sendMsgToUser(recipient, sender, message, type, tracker){
     
-
     return admin.database().ref("users").child(recipient).once('value').then(snapshot2 => {
         const userToken = snapshot2.child("token").val()
         if (userToken !== null){
@@ -34,6 +33,7 @@ function sendM(recipient, sender, message, type){
                 sender: sender,
                 message: message,
                 type: type,
+                tracker: tracker,
                 timestamp: Date.now()
             })
       }
@@ -42,34 +42,40 @@ function sendM(recipient, sender, message, type){
 
 }
 
-async function sendMessageToAudience(room, sender, message, type) {
+async function sendMessageToAudience(room, sender, message, type, tracker) {
    
     var nicknameArray = []
    await admin.database().ref("rooms").child(room).once('value').then(res => {
         res.forEach(snapshot => {
             const nickname = snapshot.key
-            console.log("nickname: " + nickname)
             nicknameArray.push(nickname)
-
         })
         return null
     })
 
     for (var i=0; i<nicknameArray.length; i++){
         const current_nickname = nicknameArray[i]
-        sendM(current_nickname, sender, message, type)
-
+        sendMsgToUser(current_nickname, sender, message, type, tracker)
     }
     
 }
 
+function validateNickname(nickname){
+    return !(nickname.length > 20 || nickname.toLowerCase() === "private" || nickname.includes("$") ||
+    nickname.includes(".") || nickname.includes("/") ||
+    nickname.includes("[") || nickname.includes("]") ||
+    nickname.includes("\\"))
+}
 
 exports.register = functions.https.onCall(async (request, context) => {
 
     const nickname = request.nickname.trim();
+
+    if (!validateNickname(nickname))
+         return "INVALID-NICKNAME"
+
     const reference = await admin.database().ref("users").child(nickname);
     const isUserAlive = await reference.once('value')
-
 
     if (!isUserAlive.exists()) {
 
@@ -88,7 +94,7 @@ exports.register = functions.https.onCall(async (request, context) => {
 
         await joiningRoom
         await query
-        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join")
+        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join", 0)
 
         return token
     }
@@ -104,6 +110,7 @@ exports.sendMessage = functions.https.onCall(async (request, context) => {
     const nickname = request.nickname
     const token = request.token
     const message = request.message
+    const tracker = request.MsgCounterACK
 
     const reference = admin.database().ref("users").child(nickname)
     const account = await reference.once('value')
@@ -114,7 +121,7 @@ exports.sendMessage = functions.https.onCall(async (request, context) => {
 
     const getRoomName = account.child('room').val()
     console.log("room: " + getRoomName)
-    await sendMessageToAudience(getRoomName, nickname, message, "regular")
+    await sendMessageToAudience(getRoomName, nickname, message, "regular", tracker)
     return "OK"
 })
 
@@ -136,7 +143,7 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
                 admin.database().ref("messages").child(current_token_user).remove()
                 admin.database().ref("rooms").child(current_room).child(current_user).remove()
 
-                sendMessageToAudience(current_room, current_user, `** ${current_user} has left the room **`, "leave")
+                sendMessageToAudience(current_room, current_user, `** ${current_user} has left the room **`, "leave", 0)
             }
         })
         return null
@@ -149,7 +156,7 @@ function removeMe(nickname, token, room){
     admin.database().ref("messages").child(token).remove()
     admin.database().ref("rooms").child(room).child(nickname).remove()
 
-    sendMessageToAudience(room, nickname, `** ${nickname} has left the conversation **`, "leave")
+    sendMessageToAudience(room, nickname, `** ${nickname} has left the room **`, "leave", 0)
 
 }
 

@@ -6,6 +6,7 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -35,10 +36,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // binds the data to the TextView in each row
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        cleanOldData(holder);
+
         String message = mData.get(position).getMessage();
         String nickname = mData.get(position).getNickname();
         String msgType = mData.get(position).getMsgType();
-
 
          if (msgType.equals("join") || msgType.equals("leave")){
              broadcast(holder, message);
@@ -46,10 +48,18 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             broadcast(holder, nickname);
         }
         else{
-
+            if (nickname.equals(MainActivity.my_nickname)){
+                holder.status.setVisibility(View.VISIBLE);
+                holder.status.setBackgroundResource(mData.get(position).getMessageStatus());
+            }
             String msg = "<font color=\"#454545\"><b>" + nickname + "</b></font>  " + message;
             broadcast(holder, msg);
         }
+    }
+
+    private void cleanOldData(ViewHolder holder) {
+        holder.status.setBackground(null);
+        holder.myTextView.setText("");
     }
 
     private void broadcast(ViewHolder holder, String msg) {
@@ -66,10 +76,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView myTextView;
+        ImageView status;
 
         ViewHolder(View itemView) {
             super(itemView);
             myTextView = itemView.findViewById(R.id.message);
+            status = itemView.findViewById(R.id.status);
             itemView.setOnClickListener(this);
         }
 

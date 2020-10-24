@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -33,6 +32,7 @@ import dis.countries.chat.MainActivity;
 import dis.countries.chat.Participants;
 import dis.countries.chat.R;
 import dis.countries.chat.RecyclerViewAdapter;
+import dis.countries.chat.toast;
 
 public class Conversation extends Fragment {
 
@@ -43,14 +43,18 @@ public class Conversation extends Fragment {
     private RecyclerView recyclerView;
     private String my_nickname, myToken;
     private HashSet<String> messageTracker = new HashSet<>();
-    private int MsgCounterACK = 0;
 
     public Conversation(String token, String nickname){
         this.myToken = token;
         this.my_nickname = nickname;
-        startListening();
+        listeningForNewMessages();
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+    }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_conversation, container, false);
@@ -58,7 +62,6 @@ public class Conversation extends Fragment {
         sendButton = root.findViewById(R.id.sendMessage);
         txt_message = root.findViewById(R.id.message);
         recyclerView = root.findViewById(R.id.recycleView);
-
 
         setRecycleview();
         scrollRecyclerview();
@@ -90,7 +93,7 @@ public class Conversation extends Fragment {
     }
 
 
-    private void startListening() {
+    private void listeningForNewMessages() {
         Controller.mDatabase.child("messages").child(MainActivity.myToken).addValueEventListener(new ValueEventListener() {
 
             @Override
@@ -130,8 +133,15 @@ public class Conversation extends Fragment {
                                 MainActivity.participantsSetBadge();
 
                             scrollDown();
-                            deleteMsg(msgId);
+
+                        } else if (nickname.equals(MainActivity.my_nickname)){
+                            System.out.println("!!!!!!!!!!!!!!!!!!!");
+                            long tracker = (long) dataMap.get("tracker");
+                            messages.get((int) tracker).setMessageStatus("sent");
+                            adapter.notifyItemChanged((int)  tracker);
                         }
+
+                        deleteMsg(msgId);
                     }
                 }
             }
@@ -172,18 +182,20 @@ public class Conversation extends Fragment {
             Animator.shake(sendButton);
             return;
         }
-        messages.add(new Item(my_nickname, message, "regular"));
+        Item item = new Item(my_nickname, message, "regular");
+        item.setMessageStatus("sending");
+        messages.add(item);
+
         adapter.notifyItemInserted(messages.size()-1);
-        MsgCounterACK++;
+
         scrollDown();
 
         txt_message.setText("");
-        System.out.println("my token: " + myToken);
         Map<String, Object> data = new HashMap<>();
         data.put("message", message);
         data.put("token", myToken);
         data.put("nickname", my_nickname);
-        data.put("MsgCounterACK", MsgCounterACK);
+        data.put("MsgCounterACK", messages.size()-1);
 
         Controller.mFunctions
                 .getHttpsCallable("sendMessage")
@@ -195,9 +207,6 @@ public class Conversation extends Fragment {
                         String answer = String.valueOf(task.getResult().getData());
                         System.out.println("answer: " + answer);
 
-                        if (!answer.equals("ERROR")) {
-
-                        }
                         return "";
                     }
                 });
