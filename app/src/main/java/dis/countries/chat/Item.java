@@ -1,7 +1,5 @@
 package dis.countries.chat;
 
-import android.graphics.drawable.Drawable;
-
 public class Item {
 
     final String nickname;
@@ -39,11 +37,16 @@ public class Item {
         this.msgType = s;
     }
 
-    public int getMessageStatus() {
-        if (messageStatus.equals("sending")){
-            return R.drawable.ic_baseline_access_time_24;
+    public int getDeleveryId() {
+        switch (messageStatus) {
+            case Parameters.DELIVERING_MSG:
+                return R.drawable.ic_baseline_access_time_24;
+            case Parameters.DELIVERED:
+                return R.drawable.ic_baseline_check_24;
+            case Parameters.DELIVERY_FAILED:
+                return R.drawable.ic_baseline_error_24;
+            default:
+                return -1;
         }
-        else
-            return R.drawable.ic_baseline_check_24;
     }
 }

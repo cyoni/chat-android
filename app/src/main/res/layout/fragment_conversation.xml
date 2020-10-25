@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:layout_width="0dp"
                 android:hint="Your message..."
-                android:inputType="textNoSuggestions|textCapSentences|textMultiLine"
+                android:inputType="textCapSentences|textMultiLine"
                 android:layout_weight="1"
                 android:id="@+id/message">
             </EditText>

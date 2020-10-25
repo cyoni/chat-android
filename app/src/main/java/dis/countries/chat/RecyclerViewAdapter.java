@@ -50,7 +50,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         else{
             if (nickname.equals(MainActivity.my_nickname)){
                 holder.status.setVisibility(View.VISIBLE);
-                holder.status.setBackgroundResource(mData.get(position).getMessageStatus());
+                holder.status.setBackgroundResource(mData.get(position).getDeleveryId());
             }
             String msg = "<font color=\"#454545\"><b>" + nickname + "</b></font>  " + message;
             broadcast(holder, msg);
@@ -82,12 +82,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             super(itemView);
             myTextView = itemView.findViewById(R.id.message);
             status = itemView.findViewById(R.id.status);
-            itemView.setOnClickListener(this);
+            status.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mClickListener != null)
+                mClickListener.onItemDeliveryStatusClick(view, getAdapterPosition());
         }
     }
 
@@ -98,11 +99,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     // allows clicks events to be caught
     public void setClickListener(Conversation itemClickListener) {
-        //this.mClickListener = itemClickListener;
+        this.mClickListener = itemClickListener;
     }
 
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
-        void onItemClick(View view, int position);
+        void onItemDeliveryStatusClick(View view, int position);
     }
 }

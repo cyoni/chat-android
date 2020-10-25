@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,24 +30,24 @@ import dis.countries.chat.Animator;
 import dis.countries.chat.Controller;
 import dis.countries.chat.Item;
 import dis.countries.chat.MainActivity;
+import dis.countries.chat.Parameters;
 import dis.countries.chat.Participants;
 import dis.countries.chat.R;
 import dis.countries.chat.RecyclerViewAdapter;
-import dis.countries.chat.toast;
 
-public class Conversation extends Fragment {
+public class Conversation extends Fragment implements RecyclerViewAdapter.ItemClickListener {
 
     private RecyclerViewAdapter adapter;
     private Button sendButton;
     private ArrayList<Item> messages = new ArrayList<>();
     private EditText txt_message;
     private RecyclerView recyclerView;
-    private String my_nickname, myToken;
+    private String myNickname, myToken;
     private HashSet<String> messageTracker = new HashSet<>();
 
     public Conversation(String token, String nickname){
         this.myToken = token;
-        this.my_nickname = nickname;
+        this.myNickname = nickname;
         listeningForNewMessages();
     }
 
@@ -74,7 +75,7 @@ public class Conversation extends Fragment {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendMessage();
+                buttonClick();
             }
         });
     }
@@ -115,7 +116,7 @@ public class Conversation extends Fragment {
                         String nickname = (String) dataMap.get("sender");
                         String messageType = (String) dataMap.get("type");
 
-                        if (!nickname.equals(my_nickname) || nickname.equals(my_nickname) && !messageType.equals("regular")) {
+                        if (!nickname.equals(myNickname) || nickname.equals(myNickname) && !messageType.equals("regular")) {
 
                             Item item = new Item(nickname, message, messageType);
                             messages.add(item);
@@ -132,15 +133,12 @@ public class Conversation extends Fragment {
                             if (!MainActivity.imOnPeopleTab && messageType.equals("join") && !nickname.equals(MainActivity.my_nickname))
                                 MainActivity.participantsSetBadge();
 
-                            scrollDown();
+                            scrollDownIfPossible();
 
                         } else if (nickname.equals(MainActivity.my_nickname)){
-                            System.out.println("!!!!!!!!!!!!!!!!!!!");
                             long tracker = (long) dataMap.get("tracker");
-                            messages.get((int) tracker).setMessageStatus("sent");
-                            adapter.notifyItemChanged((int)  tracker);
+                            msgArrived(tracker);
                         }
-
                         deleteMsg(msgId);
                     }
                 }
@@ -151,7 +149,11 @@ public class Conversation extends Fragment {
         });
     }
 
-    private void scrollDown() {
+    private void msgArrived(long msgId){
+        changeMessageDeliveryStatus((int)msgId, Parameters.DELIVERED);
+    }
+
+    private void scrollDownIfPossible() {
         if (!MainActivity.imOnConversationTab || recyclerView.canScrollVertically(1)) {
             MainActivity.setBadge();
             adapter.notifyItemInserted(messages.size() - 1);
@@ -173,29 +175,60 @@ public class Conversation extends Fragment {
         recyclerView.setAdapter(adapter);
     }
 
-    private void sendMessage() {
+    private void markAsNotArrived(final int msgId) {
+        messages.get(msgId).setMessageStatus(Parameters.DELIVERY_FAILED);
+        adapter.notifyItemChanged(msgId);
+    }
 
-        String message = txt_message.getText().toString().trim();
-
-        if (message.isEmpty()){
-            Animator.shake(txt_message);
-            Animator.shake(sendButton);
-            return;
+    @Override
+    public void onItemDeliveryStatusClick(View view, int position) {
+        Item currentMsg = messages.get(position);
+        if (currentMsg.getDeleveryId() == R.drawable.ic_baseline_error_24){
+            changeMessageDeliveryStatus(position, Parameters.DELIVERING_MSG);
+            sendMessage(currentMsg.getMessage(), position);
         }
-        Item item = new Item(my_nickname, message, "regular");
-        item.setMessageStatus("sending");
-        messages.add(item);
+    }
 
-        adapter.notifyItemInserted(messages.size()-1);
+    private void changeMessageDeliveryStatus(int position, final String status) {
+        Item currentMsg = messages.get(position);
+        currentMsg.setMessageStatus(status);
+        adapter.notifyItemChanged(position);
+    }
 
-        scrollDown();
+    private void ShakeMessageAndButton(){
+        Animator.shake(txt_message);
+        Animator.shake(sendButton);
+    }
 
-        txt_message.setText("");
+    private boolean isMessageValid(final String message){
+        return !message.isEmpty();
+    }
+
+    private void buttonClick(){
+        final String message = txt_message.getText().toString();
+        if (!isMessageValid(message)){
+            ShakeMessageAndButton();
+        }
+        else{
+            Item item = new Item(myNickname, message, Parameters.REGULAR);
+            item.setMessageStatus(Parameters.DELIVERING_MSG);
+            messages.add(item);
+            final int msgId = messages.size()-1;
+            changeMessageDeliveryStatus(msgId, Parameters.DELIVERING_MSG);
+            scrollDownIfPossible();
+            txt_message.setText("");
+            sendMessage(message, msgId);
+        }
+
+    }
+
+    private void sendMessage(final String message, final int msgId){
+
         Map<String, Object> data = new HashMap<>();
         data.put("message", message);
         data.put("token", myToken);
-        data.put("nickname", my_nickname);
-        data.put("MsgCounterACK", messages.size()-1);
+        data.put("nickname", myNickname);
+        data.put("MsgCounterACK", msgId);
 
         Controller.mFunctions
                 .getHttpsCallable("sendMessage")
@@ -209,8 +242,12 @@ public class Conversation extends Fragment {
 
                         return "";
                     }
-                });
-
-
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                markAsNotArrived(msgId);
+            }
+        });
     }
+
 }
