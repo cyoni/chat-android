@@ -10,16 +10,18 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
+@SuppressWarnings("rawtypes")
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
-    private List<Item> mData;
+
+    private List mData; // reference
     private LayoutInflater mInflater;
     private ItemClickListener msgItemListener;
     private int layout;
 
     // data is passed into the constructor
-    public RecyclerViewAdapter(Context context, int layout, List<Item> data) {
+    public RecyclerViewAdapter(Context context, int layout, List mData) {
         this.mInflater = LayoutInflater.from(context);
-        this.mData = data;
+        this.mData = mData;
         this.layout = layout;
     }
 
@@ -46,27 +48,27 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public TextView myTextView;
+        public TextView myTextView, time;
         public ImageView status;
 
         ViewHolder(View itemView) {
             super(itemView);
             myTextView = itemView.findViewById(R.id.message);
             status = itemView.findViewById(R.id.status);
-//            status.setOnClickListener(this);
+            time = itemView.findViewById(R.id.time);
         }
 
         @Override
         public void onClick(View view) {
             if (msgItemListener != null)
-                msgItemListener.onItemDeliveryStatusClick(view, getAdapterPosition());
+                msgItemListener.onItemClick(view, getAdapterPosition());
         }
     }
 
     // convenience method for getting data at click position
-    Item getItem(int id) {
-        return mData.get(id);
-    }
+    //Item getItem(int id) {
+     //   return mData.get(id);
+  //  }
 
     // allows clicks events to be caught
     public void setClickListener(Object itemClickListener) {
@@ -75,7 +77,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
-        void onItemDeliveryStatusClick(View view, int position);
         void onBinding(@NonNull ViewHolder holder, int position);
+        void onItemClick(@NonNull View holder, int position);
     }
 }

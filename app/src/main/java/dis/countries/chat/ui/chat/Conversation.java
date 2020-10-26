@@ -37,6 +37,7 @@ import dis.countries.chat.Parameters;
 import dis.countries.chat.Participants;
 import dis.countries.chat.R;
 import dis.countries.chat.RecyclerViewAdapter;
+import dis.countries.chat.Time;
 
 public class Conversation extends Fragment implements RecyclerViewAdapter.ItemClickListener {
 
@@ -188,8 +189,9 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     }
 
     @Override
-    public void onItemDeliveryStatusClick(View view, int position) {
+    public void onItemClick(@NonNull View view, int position) {
         Item currentMsg = messages.get(position);
+
         if (currentMsg.getDeleveryId() == R.drawable.ic_baseline_error_24){
             changeMessageDeliveryStatus(position, Parameters.DELIVERING_MSG);
             sendMessage(currentMsg.getMessage(), position);
@@ -204,6 +206,8 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
         String message = messages.get(position).getMessage();
         String nickname = messages.get(position).getNickname();
         String msgType = messages.get(position).getMsgType();
+        String time = messages.get(position).getTime();
+        holder.status.setOnClickListener(holder);
 
         if (msgType.equals("join") || msgType.equals("leave")){
             broadcast(holder, message);
@@ -215,7 +219,9 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
                 holder.status.setVisibility(View.VISIBLE);
                 holder.status.setBackgroundResource(messages.get(position).getDeleveryId());
             }
+
             String msg = "<font color=\"#454545\"><b>" + nickname + "</b></font>  " + message;
+            holder.time.setText(time);
             broadcast(holder, msg);
         }
     }
@@ -252,7 +258,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             ShakeMessageAndButton();
         }
         else{
-            Item item = new Item(myNickname, message, Parameters.REGULAR, timestamp);
+            Item item = new Item(myNickname, message, Parameters.REGULAR, Time.getTimeInMS());
             item.setMessageStatus(Parameters.DELIVERING_MSG);
             messages.add(item);
             final int msgId = messages.size()-1;

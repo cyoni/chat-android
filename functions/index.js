@@ -100,7 +100,7 @@ exports.register = functions.https.onCall(async (request, context) => {
 
         await joiningRoom
         await query
-        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join", 0)
+        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join", Date.now())
 
         return token
     }
@@ -158,7 +158,7 @@ exports.manageUsers = functions.pubsub.schedule('every 2 minutes').onRun(async (
                 admin.database().ref("messages").child(current_token_user).remove()
                 admin.database().ref("rooms").child(current_room).child(current_user).remove()
 
-                sendMessageToAudience(current_room, current_user, `** ${current_user} has left the room **`, "leave", 0)
+                sendMessageToAudience(current_room, current_user, `** ${current_user} has left the room **`, "leave", Date.now())
             }
         })
         return null
@@ -171,7 +171,7 @@ function removeMe(nickname, token, room){
     admin.database().ref("messages").child(token).remove()
     admin.database().ref("rooms").child(room).child(nickname).remove()
 
-    sendMessageToAudience(room, nickname, `** ${nickname} has left the room **`, "leave", 0)
+    sendMessageToAudience(room, nickname, `** ${nickname} has left the room **`, "leave",  Date.now())
 
 }
 

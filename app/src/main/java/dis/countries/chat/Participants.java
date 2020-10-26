@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -27,7 +29,8 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
 
     public static void add(String nickname) {
         if (!nickname.equals(MainActivity.my_nickname)) {
-            participants.add(new Item(nickname, "#", "status", timestamp));
+            participants.add(new Item(nickname, "#", "status", 123));
+            //participants.add(new User(nickname));
             adapter.notifyItemInserted(participants.size()-1);
         }
     }
@@ -69,7 +72,7 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
 
                     String nickname = tmp.getKey();
 
-                    participants.add ( new Item(nickname, "", "status", timestamp));
+                    participants.add ( new Item(nickname, "", "status", Time.getTimeInMS()));
                     adapter.notifyItemInserted(participants.size()-1);
                     System.out.println("@@@@@@@@@" + participants.get(participants.size()-1).getNickname());
                 }
@@ -98,7 +101,9 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
     }
 
     @Override
-    public void onItemDeliveryStatusClick(View view, int position) {}
+    public void onItemClick(@NonNull View view, int position) {
+        System.out.println(position);
+    }
 
     @Override
     public void onBinding(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {

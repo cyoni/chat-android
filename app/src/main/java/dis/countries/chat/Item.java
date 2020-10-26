@@ -1,11 +1,13 @@
 package dis.countries.chat;
 
+
 public class Item {
 
     final String nickname;
     final String message;
     private String msgType;
     private String messageStatus;
+    private String time;
     private long timestamp;
 
     public Item(String nickname, String message, String msgType, long timestamp){
@@ -13,16 +15,10 @@ public class Item {
         this.message = message;
         this.msgType = msgType;
         this.timestamp = timestamp;
-        this.time = convertTime(timestamp);
+        this.time = Time.convertTime(timestamp);
         this.messageStatus = "";
     }
 
-    private Object convertTime(long timestamp) {
-        Date date = new Date(logEvent.timeSTamp);
-        DateFormat formatter = new SimpleDateFormat("HH:mm:ss.SSS");
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String dateFormatted = formatter.format(date);
-    }
 
     public String getNickname() {
         return nickname;
@@ -48,7 +44,7 @@ public class Item {
     }
 
     public String getTime(){
-
+        return time;
     }
 
     public int getDeleveryId() {
