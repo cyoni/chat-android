@@ -6,15 +6,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -44,6 +47,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     private RecyclerView recyclerView;
     private String myNickname, myToken;
     private HashSet<String> messageTracker = new HashSet<>();
+    private RelativeLayout layout;
 
     public Conversation(String token, String nickname){
         this.myToken = token;
@@ -63,8 +67,9 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
         sendButton = root.findViewById(R.id.sendMessage);
         txt_message = root.findViewById(R.id.message);
         recyclerView = root.findViewById(R.id.recycleView);
+        layout = root.findViewById(R.id.layout);
 
-        setRecycleview();
+        setRecyclerview();
         scrollRecyclerview();
         setButtonListener();
 
@@ -115,10 +120,16 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
                         String message = (String) dataMap.get("message");
                         String nickname = (String) dataMap.get("sender");
                         String messageType = (String) dataMap.get("type");
+                        long timestamp = (long) dataMap.get("timestamp");
 
-                        if (!nickname.equals(myNickname) || nickname.equals(myNickname) && !messageType.equals("regular")) {
+                        if   (  message == null  ||
+                                nickname == null ||
+                                messageType == null
+                             ) return;
 
-                            Item item = new Item(nickname, message, messageType);
+                        if (!nickname.equals(myNickname) || !messageType.equals("regular")) {
+
+                            Item item = new Item(nickname, message, messageType, timestamp);
                             messages.add(item);
                             messageTracker.add(msgId);
 
@@ -137,9 +148,9 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
                         } else if (nickname.equals(MainActivity.my_nickname)){
                             long tracker = (long) dataMap.get("tracker");
-                            msgArrived(tracker);
+                            changeMessageDeliveryStatus((int)tracker, Parameters.DELIVERED);
                         }
-                        deleteMsg(msgId);
+                        deleteMsgFromServer(msgId);
                     }
                 }
             }
@@ -147,10 +158,6 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
-    }
-
-    private void msgArrived(long msgId){
-        changeMessageDeliveryStatus((int)msgId, Parameters.DELIVERED);
     }
 
     private void scrollDownIfPossible() {
@@ -164,18 +171,18 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
         }
     }
 
-    private void deleteMsg(String msgId) {
+    private void deleteMsgFromServer(String msgId) {
         Controller.mDatabase.child("messages").child(myToken).child(msgId).setValue(null);
     }
 
-    private void setRecycleview() {
+    private void setRecyclerview() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new RecyclerViewAdapter(getContext(), messages);
+        adapter = new RecyclerViewAdapter(getContext(), R.layout.item, messages);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
     }
 
-    private void markAsNotArrived(final int msgId) {
+    private void markMsgAsNotArrived(final int msgId) {
         messages.get(msgId).setMessageStatus(Parameters.DELIVERY_FAILED);
         adapter.notifyItemChanged(msgId);
     }
@@ -188,6 +195,41 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             sendMessage(currentMsg.getMessage(), position);
         }
     }
+
+    @Override
+    public void onBinding(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {
+
+        cleanOldData(holder);
+
+        String message = messages.get(position).getMessage();
+        String nickname = messages.get(position).getNickname();
+        String msgType = messages.get(position).getMsgType();
+
+        if (msgType.equals("join") || msgType.equals("leave")){
+            broadcast(holder, message);
+        } else if (msgType.equals("status")) {
+            broadcast(holder, nickname);
+        }
+        else{
+            if (nickname.equals(MainActivity.my_nickname)){
+                holder.status.setVisibility(View.VISIBLE);
+                holder.status.setBackgroundResource(messages.get(position).getDeleveryId());
+            }
+            String msg = "<font color=\"#454545\"><b>" + nickname + "</b></font>  " + message;
+            broadcast(holder, msg);
+        }
+    }
+
+
+    private void cleanOldData(RecyclerViewAdapter.ViewHolder holder) {
+        holder.status.setBackground(null);
+        holder.myTextView.setText("");
+    }
+
+    private void broadcast(RecyclerViewAdapter.ViewHolder holder, String msg) {
+        holder.myTextView.setText(Html.fromHtml(msg));
+    }
+
 
     private void changeMessageDeliveryStatus(int position, final String status) {
         Item currentMsg = messages.get(position);
@@ -210,7 +252,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             ShakeMessageAndButton();
         }
         else{
-            Item item = new Item(myNickname, message, Parameters.REGULAR);
+            Item item = new Item(myNickname, message, Parameters.REGULAR, timestamp);
             item.setMessageStatus(Parameters.DELIVERING_MSG);
             messages.add(item);
             final int msgId = messages.size()-1;
@@ -219,7 +261,6 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             txt_message.setText("");
             sendMessage(message, msgId);
         }
-
     }
 
     private void sendMessage(final String message, final int msgId){
@@ -236,18 +277,37 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override
                     public String then(@NonNull Task<HttpsCallableResult> task) {
-
                         String answer = String.valueOf(task.getResult().getData());
                         System.out.println("answer: " + answer);
-
                         return "";
                     }
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                markAsNotArrived(msgId);
+                markMsgAsNotArrived(msgId);
+
+                checkReason();
+
+
             }
         });
+    }
+
+    private void checkReason() {
+        // 1. check internet connection
+        // if (!isConnectedToInternet()) {  }
+        Controller.showSnackbar(layout, "No internet connection.");
+        // else if (!isStillAlive(myToken)){
+        Snackbar snackbar = Snackbar.make(layout , "You are disconnected.", Snackbar.LENGTH_INDEFINITE).setAction("RECONNECT", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+        snackbar.show();
+        // }
+
+        // 2. check if you are still connected to the database
     }
 
 }

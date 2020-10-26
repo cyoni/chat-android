@@ -1,7 +1,6 @@
 package dis.countries.chat;
 
 import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 
-public class Participants extends Fragment {
+public class Participants extends Fragment implements RecyclerViewAdapter.ItemClickListener{
 
     RecyclerView recyclerView;
     static ArrayList<Item> participants = new ArrayList<>();
@@ -28,7 +27,7 @@ public class Participants extends Fragment {
 
     public static void add(String nickname) {
         if (!nickname.equals(MainActivity.my_nickname)) {
-            participants.add(new Item(nickname, "#", "status"));
+            participants.add(new Item(nickname, "#", "status", timestamp));
             adapter.notifyItemInserted(participants.size()-1);
         }
     }
@@ -39,14 +38,15 @@ public class Participants extends Fragment {
             if (current.getNickname().equals(nickname)){
                 participants.remove(i);
                 adapter.notifyItemRemoved(i);
+                break;
             }
         }
     }
 
     private void setRecycleview() {
-        adapter = new RecyclerViewAdapter(getContext(), participants);
+        adapter = new RecyclerViewAdapter(getContext(), R.layout.item_user, participants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-     //   adapter.setClickListener(this);
+        adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
     }
 
@@ -69,8 +69,9 @@ public class Participants extends Fragment {
 
                     String nickname = tmp.getKey();
 
-                    participants.add ( new Item(nickname, "", "status"));
+                    participants.add ( new Item(nickname, "", "status", timestamp));
                     adapter.notifyItemInserted(participants.size()-1);
+                    System.out.println("@@@@@@@@@" + participants.get(participants.size()-1).getNickname());
                 }
                 MainActivity.updateOnlineTitle();
             }
@@ -94,6 +95,19 @@ public class Participants extends Fragment {
         }
 
         return root;
+    }
 
+    @Override
+    public void onItemDeliveryStatusClick(View view, int position) {}
+
+    @Override
+    public void onBinding(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {
+            cleanOldData(holder);
+            String nickname = participants.get(position).getNickname();
+            holder.myTextView.setText(nickname);
+        }
+
+    private void cleanOldData(RecyclerViewAdapter.ViewHolder holder) {
+        holder.myTextView.setText("");
     }
 }

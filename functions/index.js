@@ -61,10 +61,16 @@ async function sendMessageToAudience(room, sender, message, type, tracker) {
 }
 
 function validateNickname(nickname){
-    return !(nickname.length > 20 || nickname.toLowerCase() === "private" || nickname.includes("$") ||
-    nickname.includes(".") || nickname.includes("/") ||
-    nickname.includes("[") || nickname.includes("]") ||
-    nickname.includes("\\"))
+    return !(
+            nickname === "" ||
+            nickname.length > 20 ||
+            nickname.includes("$") ||
+            nickname.includes(".") || 
+            nickname.includes("/") ||
+            nickname.includes("[") || 
+            nickname.includes("]") ||
+            nickname.includes("\\")
+            )
 }
 
 exports.register = functions.https.onCall(async (request, context) => {
@@ -103,6 +109,11 @@ exports.register = functions.https.onCall(async (request, context) => {
     }
 })
 
+function isMsgValid(message){
+    if (message.trim() === "")
+        return false
+    return true
+}
 
 
 exports.sendMessage = functions.https.onCall(async (request, context) => {
@@ -114,6 +125,10 @@ exports.sendMessage = functions.https.onCall(async (request, context) => {
 
     const reference = admin.database().ref("users").child(nickname)
     const account = await reference.once('value')
+
+    if (!isMsgValid(message)){
+        return "MSG-NOT-VALID"
+    }
 
     if (!account.child('token').val() === token) {
         return "AUTH-FAILED"
