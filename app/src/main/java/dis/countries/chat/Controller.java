@@ -7,6 +7,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
@@ -72,4 +75,5 @@ public class Controller {
         Snackbar snackbar = Snackbar.make(layout , msg, Snackbar.LENGTH_LONG);
         snackbar.show();
     }
+
 }

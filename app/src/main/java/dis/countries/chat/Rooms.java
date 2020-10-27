@@ -13,8 +13,8 @@ import android.widget.Button;
 public class Rooms extends Fragment {
 
 
-    public Rooms(String x, String y) {
-        // Required empty public constructor
+    public Rooms() {
+
     }
 
     @Override

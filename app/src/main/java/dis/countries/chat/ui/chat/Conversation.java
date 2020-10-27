@@ -48,16 +48,14 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     private RecyclerView recyclerView;
     private HashSet<String> messageTracker = new HashSet<>();
     private RelativeLayout layout;
+    private boolean refresh = true;
 
-    public Conversation(){
-        listeningForNewMessages();
-    }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        listeningForNewMessages();
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -99,64 +97,68 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
 
     private void listeningForNewMessages() {
-        Controller.mDatabase.child("messages").child(MainActivity.myToken).addValueEventListener(new ValueEventListener() {
+        if (refresh) {
+            refresh = false;
+            Controller.mDatabase.child("messages").child(MainActivity.myToken).addValueEventListener(new ValueEventListener() {
 
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                System.out.println("raw data: " + snapshot.getValue());
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    System.out.println("raw data: " + snapshot.getValue());
 
-                Iterator<DataSnapshot> iterator = snapshot.getChildren().iterator();
-                DataSnapshot tmp;
+                    Iterator<DataSnapshot> iterator = snapshot.getChildren().iterator();
+                    DataSnapshot tmp;
 
-                while (iterator.hasNext()) {
-                    tmp = iterator.next();
-                    //noinspection unchecked
-                    HashMap<String, Object> dataMap = (HashMap<String, Object>) tmp.getValue();
+                    while (iterator.hasNext()) {
+                        tmp = iterator.next();
+                        //noinspection unchecked
+                        HashMap<String, Object> dataMap = (HashMap<String, Object>) tmp.getValue();
 
-                    String msgId = tmp.getKey();
+                        String msgId = tmp.getKey();
 
-                    if (!messageTracker.contains(msgId)) {
-                        String message = (String) dataMap.get("message");
-                        String nickname = (String) dataMap.get("sender");
-                        String messageType = (String) dataMap.get("type");
-                        long timestamp = (long) dataMap.get("timestamp");
+                        if (!messageTracker.contains(msgId)) {
+                            String message = (String) dataMap.get("message");
+                            String nickname = (String) dataMap.get("sender");
+                            String messageType = (String) dataMap.get("type");
+                            long timestamp = (long) dataMap.get("timestamp");
 
-                        if   (  message == null  ||
-                                nickname == null ||
-                                messageType == null
-                             ) return;
+                            if (message == null ||
+                                    nickname == null ||
+                                    messageType == null
+                            ) return;
 
-                        if (!nickname.equals(MainActivity.my_nickname) || !messageType.equals("regular")) {
+                            if (!nickname.equals(MainActivity.my_nickname) || !messageType.equals("regular")) {
 
-                            Item item = new Item(nickname, message, messageType, timestamp);
-                            messages.add(item);
-                            messageTracker.add(msgId);
+                                Item item = new Item(nickname, message, messageType, timestamp);
+                                messages.add(item);
+                                messageTracker.add(msgId);
 
-                            if (messageType.equals("leave")) {
-                                Participants.remove(nickname);
-                                MainActivity.updateOnlineTitle();
-                            } else if (messageType.equals("join")) {
-                                Participants.add(nickname);
-                                MainActivity.updateOnlineTitle();
+                                if (messageType.equals("leave")) {
+                                    Participants.remove(nickname);
+                                    MainActivity.updateOnlineTitle();
+                                } else if (messageType.equals("join")) {
+                                    Participants.add(nickname);
+                                    MainActivity.updateOnlineTitle();
+                                }
+
+                                if (!MainActivity.imOnPeopleTab && messageType.equals("join") && !nickname.equals(MainActivity.my_nickname))
+                                    MainActivity.participantsSetBadge();
+
+                                scrollDownIfPossible();
+
+                            } else if (nickname.equals(MainActivity.my_nickname)) {
+                                long tracker = (long) dataMap.get("tracker");
+                                changeMessageDeliveryStatus((int) tracker, Parameters.DELIVERED);
                             }
-
-                            if (!MainActivity.imOnPeopleTab && messageType.equals("join") && !nickname.equals(MainActivity.my_nickname))
-                                MainActivity.participantsSetBadge();
-
-                            scrollDownIfPossible();
-
-                        } else if (nickname.equals(MainActivity.my_nickname)){
-                            long tracker = (long) dataMap.get("tracker");
-                            changeMessageDeliveryStatus((int)tracker, Parameters.DELIVERED);
+                            deleteMsgFromServer(msgId);
                         }
-                        deleteMsgFromServer(msgId);
                     }
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
+            });
+        }
     }
 
     private void scrollDownIfPossible() {
@@ -175,6 +177,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     }
 
     private void setRecyclerview() {
+        System.out.println(messages.size() + "##");
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new RecyclerViewAdapter(getContext(), R.layout.item, messages);
         adapter.setClickListener(this);
