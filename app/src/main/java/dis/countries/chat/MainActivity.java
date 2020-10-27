@@ -9,7 +9,11 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.tabs.TabLayout;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,10 +24,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
+import dis.countries.chat.ui.chat.Conversation;
 import dis.countries.chat.ui.home.Home;
 import dis.countries.chat.ui.main.SectionsPagerAdapter;
 
@@ -34,12 +40,11 @@ public class MainActivity extends AppCompatActivity {
     public static int NEW_MESSAGES = 0;
     public static boolean imOnConversationTab = true, imOnPeopleTab = false;
     private static int ConversationTab = 1, PEOPLE = 0;
-    private boolean busy = false;
 
     public static void participantsSetBadge() {
          tabs.getTabAt(0).getOrCreateBadge();
     }
-    public static BottomNavigationView buttomMenu;
+    public static BottomNavigationView bottomNavigationView;
 
     public static void updateOnlineTitle() {
 
@@ -47,14 +52,11 @@ public class MainActivity extends AppCompatActivity {
         tabs.getTabAt(ConversationTab).setText("Lobby");
     }
 
-    public static void setAlpha() {
-        buttomMenu.setAlpha(0);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         setActionbar();
 
@@ -65,12 +67,39 @@ public class MainActivity extends AppCompatActivity {
 
         tabs = findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
-        buttomMenu = findViewById(R.id.bottom_navigation);
 
+
+        listenBottomMenu();
         getData();
         keepMeAlive();
-       // hideOrShowBottomMenuWhenKeyboardAppears();
         tabsListener();
+    }
+
+    private void listenBottomMenu() {
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+           @Override
+           public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+               switch (item.getItemId()){
+                   case R.id.home:
+                       changeFragment(new Conversation());
+                        break;
+                   case R.id.favorite:
+                       changeFragment(new Participants());
+                       break;
+               }
+            return true;
+           }
+        });
+    }
+
+    private void changeFragment(Object fragment) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.replace(R.id.contentFragment, (Fragment) fragment);
+        transaction.commit();
     }
 
     private void tabsListener() {
@@ -84,9 +113,7 @@ public class MainActivity extends AppCompatActivity {
                     imOnPeopleTab = true;
                 } else
                     imOnPeopleTab = false;
-
                 if (index != ConversationTab){
-
                     hideKeyboard();
                     imOnConversationTab = false;
                 }
@@ -108,82 +135,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-/*
-    public static void hideBottomMenu(){
-        buttomMenu.setVisibility(View.GONE);
-    }
-*/
-
-/*
-    private void hideOrShowBottomMenuWhenKeyboardAppears() {
-        final View constraintLayout = findViewById(R.id.relativelayout);
-        constraintLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                Rect r = new Rect();
-                constraintLayout.getWindowVisibleDisplayFrame(r);
-                int screenHeight = constraintLayout.getRootView().getHeight();
-                int keypadHeight = screenHeight - r.bottom;
-                if (keypadHeight > screenHeight * 0.15) {
-                    hideBottomMenu();
-                    buttomMenu.setAlpha(0);
-                } else {
-                    if (buttomMenu.getAlpha() == 0){
-                        buttomMenu.setVisibility(View.VISIBLE);
-                        buttomMenu.animate().alpha(1.0f).setDuration(300).start();
-                    }
-                }
-            }
-        });
-    }
-*/
-
-    private void waitForASec() {
-        new CountDownTimer(500, 1000) {
-            public void onTick(long millisUntilFinished) {
-                //  editText.setText("Seconds remaining: " + millisUntilFinished / 1000);
-            }
-            public void onFinish() {
-                busy = false;
-            }
-        }.start();
-
-    }
-
-    private void hideKeyboardWithDelay() {
-
-
-
-        new CountDownTimer(10, 1000) {
-            public void onTick(long millisUntilFinished) {
-                //  editText.setText("Seconds remaining: " + millisUntilFinished / 1000);
-            }
-            public void onFinish() {
-
-               // buttomMenu.setVisibility(View.GONE);
-            }
-        }.start();
-    }
-
-    public static void showKeyboardWithDelay() {
-        //buttomMenu.setVisibility(View.VISIBLE);
-        buttomMenu.animate().alpha(1.0f).setDuration(3000).start();
-
-        new CountDownTimer(100, 1000) {
-            public void onTick(long millisUntilFinished) {
-              //  editText.setText("Seconds remaining: " + millisUntilFinished / 1000);
-            }
-            public void onFinish() {
-                //buttomMenu.setVisibility(View.VISIBLE);
-            }
-        }.start();
-    }
-
 
     private void setActionbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(Html.fromHtml("<font color=\"#ffffff\">Chat</font>"));
+
+        ActionBar supportActionBar = getSupportActionBar();
+
+        if (supportActionBar != null)
+            supportActionBar.setTitle(Html.fromHtml("<font color=\"#ffffff\">Chat</font>"));
     }
 
     @Override

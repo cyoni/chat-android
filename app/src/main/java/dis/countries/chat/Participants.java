@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -20,24 +19,20 @@ import java.util.Iterator;
 public class Participants extends Fragment implements RecyclerViewAdapter.ItemClickListener{
 
     RecyclerView recyclerView;
-    static ArrayList<Item> participants = new ArrayList<>();
+    static ArrayList<User> participants = new ArrayList<>();
     static RecyclerViewAdapter adapter;
 
-    public Participants() {
-
-    }
 
     public static void add(String nickname) {
         if (!nickname.equals(MainActivity.my_nickname)) {
-            participants.add(new Item(nickname, "#", "status", 123));
-            //participants.add(new User(nickname));
+            participants.add(new User(nickname));
             adapter.notifyItemInserted(participants.size()-1);
         }
     }
 
     public static void remove(String nickname) {
         for (int i=0; i<participants.size(); i++){
-            Item current = participants.get(i);
+            User current = participants.get(i);
             if (current.getNickname().equals(nickname)){
                 participants.remove(i);
                 adapter.notifyItemRemoved(i);
@@ -46,7 +41,7 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
         }
     }
 
-    private void setRecycleview() {
+    private void setRecyclerview() {
         adapter = new RecyclerViewAdapter(getContext(), R.layout.item_user, participants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter.setClickListener(this);
@@ -72,9 +67,8 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
 
                     String nickname = tmp.getKey();
 
-                    participants.add ( new Item(nickname, "", "status", Time.getTimeInMS()));
+                    participants.add(new User(nickname));
                     adapter.notifyItemInserted(participants.size()-1);
-                    System.out.println("@@@@@@@@@" + participants.get(participants.size()-1).getNickname());
                 }
                 MainActivity.updateOnlineTitle();
             }
@@ -91,7 +85,9 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
         View root = inflater.inflate(R.layout.fragment_participants, container, false);
         recyclerView = root.findViewById(R.id.recycleView);
 
-        setRecycleview();
+        setRecyclerview();
+
+        recyclerView.addOnItemTouchListener(onClickListener());
 
         if (participants.isEmpty()){
             getParticipants();
@@ -100,16 +96,28 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
         return root;
     }
 
-    @Override
-    public void onItemClick(@NonNull View view, int position) {
-        System.out.println(position);
+    private RecyclerView.OnItemTouchListener onClickListener() {
+        return new RecyclerItemClickListener(getContext(), recyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
+            @Override public void onItemClick(View view, int position) {
+                System.out.println(position);
+            }
+
+            @Override public void onLongItemClick(View view, int position) {
+                System.out.println(position);
+            }
+        });
     }
+
+    @Override
+    public void onItemClick(@NonNull View view, int position) { }
 
     @Override
     public void onBinding(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {
             cleanOldData(holder);
             String nickname = participants.get(position).getNickname();
             holder.myTextView.setText(nickname);
+            //holder. .setOnClickListener(holder);
+
         }
 
     private void cleanOldData(RecyclerViewAdapter.ViewHolder holder) {

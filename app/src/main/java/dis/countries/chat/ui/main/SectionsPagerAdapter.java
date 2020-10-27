@@ -36,7 +36,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
             case 0:
                 return new Participants();
             case 1:
-                return new Conversation(MainActivity.myToken, MainActivity.my_nickname);
+                return new Participants();
             case 2:
                 return new Rooms(MainActivity.myToken, MainActivity.my_nickname);
             case 3:

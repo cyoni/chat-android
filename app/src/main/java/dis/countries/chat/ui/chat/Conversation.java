@@ -46,15 +46,13 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     private ArrayList<Item> messages = new ArrayList<>();
     private EditText txt_message;
     private RecyclerView recyclerView;
-    private String myNickname, myToken;
     private HashSet<String> messageTracker = new HashSet<>();
     private RelativeLayout layout;
 
-    public Conversation(String token, String nickname){
-        this.myToken = token;
-        this.myNickname = nickname;
+    public Conversation(){
         listeningForNewMessages();
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -128,7 +126,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
                                 messageType == null
                              ) return;
 
-                        if (!nickname.equals(myNickname) || !messageType.equals("regular")) {
+                        if (!nickname.equals(MainActivity.my_nickname) || !messageType.equals("regular")) {
 
                             Item item = new Item(nickname, message, messageType, timestamp);
                             messages.add(item);
@@ -173,7 +171,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     }
 
     private void deleteMsgFromServer(String msgId) {
-        Controller.mDatabase.child("messages").child(myToken).child(msgId).setValue(null);
+        Controller.mDatabase.child("messages").child(MainActivity.myToken).child(msgId).setValue(null);
     }
 
     private void setRecyclerview() {
@@ -210,9 +208,9 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
         holder.status.setOnClickListener(holder);
 
         if (msgType.equals("join") || msgType.equals("leave")){
-            broadcast(holder, message);
+            broadcast(holder, message, time);
         } else if (msgType.equals("status")) {
-            broadcast(holder, nickname);
+            broadcast(holder, nickname, time);
         }
         else{
             if (nickname.equals(MainActivity.my_nickname)){
@@ -221,19 +219,20 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             }
 
             String msg = "<font color=\"#454545\"><b>" + nickname + "</b></font>  " + message;
-            holder.time.setText(time);
-            broadcast(holder, msg);
+            broadcast(holder, msg, time);
         }
     }
 
 
     private void cleanOldData(RecyclerViewAdapter.ViewHolder holder) {
         holder.status.setBackground(null);
+        holder.time.setText("");
         holder.myTextView.setText("");
     }
 
-    private void broadcast(RecyclerViewAdapter.ViewHolder holder, String msg) {
+    private void broadcast(RecyclerViewAdapter.ViewHolder holder, String msg, String time) {
         holder.myTextView.setText(Html.fromHtml(msg));
+        holder.time.setText(time);
     }
 
 
@@ -258,7 +257,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             ShakeMessageAndButton();
         }
         else{
-            Item item = new Item(myNickname, message, Parameters.REGULAR, Time.getTimeInMS());
+            Item item = new Item(MainActivity.my_nickname, message, Parameters.REGULAR, Time.getTimeInMS());
             item.setMessageStatus(Parameters.DELIVERING_MSG);
             messages.add(item);
             final int msgId = messages.size()-1;
@@ -273,8 +272,8 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
         Map<String, Object> data = new HashMap<>();
         data.put("message", message);
-        data.put("token", myToken);
-        data.put("nickname", myNickname);
+        data.put("token", MainActivity.myToken);
+        data.put("nickname", MainActivity.my_nickname);
         data.put("MsgCounterACK", msgId);
 
         Controller.mFunctions

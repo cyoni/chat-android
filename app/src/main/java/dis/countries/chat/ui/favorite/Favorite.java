@@ -1,25 +1,20 @@
-package dis.countries.chat.ui.home;
+package dis.countries.chat.ui.favorite;
 
-import android.content.Context;
+
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import android.text.Html;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.agrawalsuneet.dotsloader.loaders.TashieLoader;
 import com.google.android.gms.tasks.Continuation;
@@ -29,15 +24,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.HttpsCallableResult;
 
-import org.w3c.dom.Document;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +33,7 @@ import dis.countries.chat.MainActivity;
 import dis.countries.chat.R;
 import dis.countries.chat.toast;
 
-public class Home extends AppCompatActivity {
+public class Favorite extends AppCompatActivity {
 
     TashieLoader loader;
     TextInputLayout container;
