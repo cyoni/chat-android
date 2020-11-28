@@ -19,6 +19,7 @@ public class Container extends Fragment {
 
     public TabLayout tabs;
     public MainActivity mainActivity;
+    private ViewPager viewPager;
 
     public Container(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
@@ -34,7 +35,7 @@ public class Container extends Fragment {
         View root = inflater.inflate(R.layout.fragment_chat, container, false);
 
         SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(getContext(), getChildFragmentManager(), mainActivity);
-        ViewPager viewPager = root.findViewById(R.id.view_pager);
+        viewPager = root.findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
 
         viewPager.setCurrentItem(1);
@@ -42,5 +43,9 @@ public class Container extends Fragment {
         tabs.setupWithViewPager(viewPager);
 
         return root;
+    }
+
+    public void changeTab(int index){
+        viewPager.setCurrentItem(index);
     }
 }

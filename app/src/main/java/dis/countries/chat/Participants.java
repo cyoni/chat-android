@@ -21,7 +21,11 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
     RecyclerView recyclerView;
     static ArrayList<User> participants = new ArrayList<>();
     static RecyclerViewAdapter adapter;
+    private MainActivity mainActivity;
 
+    public Participants(MainActivity mainActivity){
+        this.mainActivity = mainActivity;
+    }
 
     public static void add(String nickname) {
         if (!nickname.equals(MainActivity.my_nickname)) {
@@ -31,7 +35,7 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
     }
 
     public static void remove(String nickname) {
-        for (int i=0; i<participants.size(); i++){
+        for (int i=0; i < participants.size(); i++){
             User current = participants.get(i);
             if (current.getNickname().equals(nickname)){
                 participants.remove(i);
@@ -47,7 +51,6 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
     }
-
 
     private void getParticipants() {
 
@@ -99,11 +102,16 @@ public class Participants extends Fragment implements RecyclerViewAdapter.ItemCl
     private RecyclerView.OnItemTouchListener onClickListener() {
         return new RecyclerItemClickListener(getContext(), recyclerView ,new RecyclerItemClickListener.OnItemClickListener() {
             @Override public void onItemClick(View view, int position) {
-                System.out.println(position);
+                String recipient = participants.get(position).getNickname();
+                System.out.println("nickname: " + recipient);
+
+                mainActivity.conversation.changeRecipient(true, recipient);
+                mainActivity.chat_container.changeTab(1);
+
             }
 
             @Override public void onLongItemClick(View view, int position) {
-                System.out.println(position);
+                System.out.println("Participant Menu");
             }
         });
     }

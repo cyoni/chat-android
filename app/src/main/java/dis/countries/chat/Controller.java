@@ -7,9 +7,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
@@ -21,12 +18,18 @@ import com.google.firebase.functions.HttpsCallableResult;
 import java.util.HashMap;
 import java.util.Map;
 
-import dis.countries.chat.ui.home.Home;
-
 public class Controller {
     public static DatabaseReference mDatabase;
     public static FirebaseFunctions mFunctions;
 
+
+    public static Task<HttpsCallableResult> connect(final String nickname) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("nickname", nickname);
+        return Controller.mFunctions
+                .getHttpsCallable("register")
+                .call(data);
+    }
 
     public static Task<String> logOut(final boolean withExit) {
 

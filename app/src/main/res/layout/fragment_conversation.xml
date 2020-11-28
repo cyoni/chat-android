@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
                 style="@style/Widget.MaterialComponents.Button"
-                app:backgroundTint="#3F51B5"
+
                 android:text="Send"/>
         </LinearLayout>
 

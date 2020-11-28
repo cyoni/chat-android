@@ -9,16 +9,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 import dis.countries.chat.MainActivity;
-import dis.countries.chat.Participants;
 import dis.countries.chat.R;
-import dis.countries.chat.Rooms;
-import dis.countries.chat.ui.chat.Conversation;
-import dis.countries.chat.ui.home.Home;
 
-/**
- * A [FragmentPagerAdapter] that returns a fragment corresponding to
- * one of the sections/tabs/pages.
- */
+
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     @StringRes

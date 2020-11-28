@@ -6,7 +6,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.Html;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +40,7 @@ import dis.countries.chat.Participants;
 import dis.countries.chat.R;
 import dis.countries.chat.RecyclerViewAdapter;
 import dis.countries.chat.Time;
+import dis.countries.chat.toast;
 
 public class Conversation extends Fragment implements RecyclerViewAdapter.ItemClickListener {
 
@@ -48,15 +51,21 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     private RecyclerView recyclerView;
     private HashSet<String> messageTracker = new HashSet<>();
     private RelativeLayout layout;
+    private String recipient;
     private boolean refresh = true;
-
-
+    private ValueEventListener firebaseListener = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         listeningForNewMessages();
     }
+
+/*
+    public Conversation(String recipient){
+        this.recipient = recipient;
+    }
+*/
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_conversation, container, false);
@@ -68,9 +77,40 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
         setRecyclerview();
         scrollRecyclerview();
+        setMessageTextListener();
+        setSendButtonVisibleGone(true);
         setButtonListener();
 
         return root;
+    }
+
+    private void setMessageTextListener() {
+        txt_message.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (editable.toString().isEmpty())
+                    setSendButtonVisibleGone(true);
+                else
+                    setSendButtonVisibleGone(false);
+            }
+        });
+    }
+
+    private void setSendButtonVisibleGone(boolean what) {
+        if (what){
+            sendButton.setVisibility(View.GONE);
+        }else
+            sendButton.setVisibility(View.VISIBLE);
     }
 
     private void setButtonListener() {
@@ -97,10 +137,10 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
 
     private void listeningForNewMessages() {
-        if (refresh) {
-            refresh = false;
-            Controller.mDatabase.child("messages").child(MainActivity.myToken).addValueEventListener(new ValueEventListener() {
 
+        if (firebaseListener == null) {
+       //     refresh = false;
+            firebaseListener = Controller.mDatabase.child("messages").child(MainActivity.myToken).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     System.out.println("raw data: " + snapshot.getValue());
@@ -145,7 +185,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
                                 scrollDownIfPossible();
 
-                            } else if (nickname.equals(MainActivity.my_nickname)) {
+                            } else /*if (nickname.equals(MainActivity.my_nickname))*/ {
                                 long tracker = (long) dataMap.get("tracker");
                                 changeMessageDeliveryStatus((int) tracker, Parameters.DELIVERED);
                             }
@@ -156,6 +196,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
+                    System.out.println("error while listening " );
                 }
             });
         }
@@ -192,7 +233,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
     @Override
     public void onItemClick(@NonNull View view, int position) {
         Item currentMsg = messages.get(position);
-
+        System.out.println("#############");
         if (currentMsg.getDeleveryId() == R.drawable.ic_baseline_error_24){
             changeMessageDeliveryStatus(position, Parameters.DELIVERING_MSG);
             sendMessage(currentMsg.getMessage(), position);
@@ -226,7 +267,6 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
         }
     }
 
-
     private void cleanOldData(RecyclerViewAdapter.ViewHolder holder) {
         holder.status.setBackground(null);
         holder.time.setText("");
@@ -237,7 +277,6 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
         holder.myTextView.setText(Html.fromHtml(msg));
         holder.time.setText(time);
     }
-
 
     private void changeMessageDeliveryStatus(int position, final String status) {
         Item currentMsg = messages.get(position);
@@ -275,6 +314,7 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
 
         Map<String, Object> data = new HashMap<>();
         data.put("message", message);
+        data.put("recipient", recipient);
         data.put("token", MainActivity.myToken);
         data.put("nickname", MainActivity.my_nickname);
         data.put("MsgCounterACK", msgId);
@@ -286,6 +326,11 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
                     @Override
                     public String then(@NonNull Task<HttpsCallableResult> task) {
                         String answer = String.valueOf(task.getResult().getData());
+                        if (!answer.equals("OK")){
+                            markMsgAsNotArrived(msgId);
+                            msgNotArrived(answer);
+                        }
+
                         System.out.println("answer: " + answer);
                         return "";
                     }
@@ -293,29 +338,66 @@ public class Conversation extends Fragment implements RecyclerViewAdapter.ItemCl
             @Override
             public void onFailure(@NonNull Exception e) {
                 markMsgAsNotArrived(msgId);
-
-                checkReason();
-
-
+                internetConnectionError();
             }
         });
     }
 
-    private void checkReason() {
-        // 1. check internet connection
-        // if (!isConnectedToInternet()) {  }
-        Controller.showSnackbar(layout, "No internet connection.");
-        // else if (!isStillAlive(myToken)){
+    private void msgNotArrived(String answer) {
+        if (answer.equals("AUTH-FAILED")){
+            userNotConnected();
+        }
+        else if (answer.equals("MSG-NOT-VALID")){
+            msgNotValid();
+        }
+        else {
+            Controller.showSnackbar(layout, answer);
+        }
+    }
+
+    private void msgNotValid() {
+        Controller.showSnackbar(layout, "Message was not sent.");
+    }
+
+    private void userNotConnected() {
         Snackbar snackbar = Snackbar.make(layout , "You are disconnected.", Snackbar.LENGTH_INDEFINITE).setAction("RECONNECT", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                reconnect();
             }
         });
         snackbar.show();
-        // }
-
-        // 2. check if you are still connected to the database
     }
 
+    private void reconnect() {
+        Controller.showSnackbar(layout, "Reconnecting...");
+        Controller.connect(MainActivity.my_nickname).continueWith(new Continuation<HttpsCallableResult, String>() {
+            @Override
+            public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                String result = (String) task.getResult().getData();
+                if (result == null){
+                    Controller.showSnackbar(layout, "An error occurred.");
+                }
+                else if (result.equals("busy")){
+                    Controller.showSnackbar(layout, "Nickname is in use.");
+                }  else {
+                    Controller.mDatabase.removeEventListener(firebaseListener);
+                    firebaseListener = null;
+                    Controller.showSnackbar(layout, "Back online!");
+                    MainActivity.myToken = result;
+                    listeningForNewMessages();
+                }
+                return result;
+            }
+        });
+    }
+
+    private void internetConnectionError() {
+        Controller.showSnackbar(layout, "There is a problem with the connection.");
+    }
+
+    public void changeRecipient(boolean isUser, String recipient) {
+        String path = isUser ? Parameters.USER : Parameters.ROOM;
+        this.recipient = path + "#" + recipient;
+    }
 }

@@ -130,7 +130,7 @@ exports.sendMessage = functions.https.onCall(async (request, context) => {
         return "MSG-NOT-VALID"
     }
 
-    if (!account.child('token').val() === token) {
+    if (!account.exists() || !account.child('token').val() === token) {
         return "AUTH-FAILED"
     }
 

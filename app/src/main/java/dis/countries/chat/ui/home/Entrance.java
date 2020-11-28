@@ -40,6 +40,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import dis.countries.chat.Animator;
 import dis.countries.chat.Controller;
@@ -47,7 +48,7 @@ import dis.countries.chat.MainActivity;
 import dis.countries.chat.R;
 import dis.countries.chat.toast;
 
-public class Home extends AppCompatActivity {
+public class Entrance extends AppCompatActivity {
 
     TashieLoader loader;
     TextInputLayout container;
@@ -69,8 +70,17 @@ public class Home extends AppCompatActivity {
         setActionbar();
         setFirebase();
         setOnListener();
+
+        // for tests:
+        applyAnimation();
+        logIn(generateNickname());
+        //
     }
 
+    private String generateNickname() {
+        Random random = new Random();
+        return "usr"+ random.nextInt(1000 - 1 + 1) + 1;
+    }
 
 
     private void setOnListener() {
@@ -129,13 +139,7 @@ public class Home extends AppCompatActivity {
     private Task<String> logIn(final String nickname) {
         final RelativeLayout relativeLayout = findViewById(R.id.screen);
 
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("nickname", nickname);
-
-        return Controller.mFunctions
-                .getHttpsCallable("register")
-                .call(data)
+        return Controller.connect(nickname)
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override
                     public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {

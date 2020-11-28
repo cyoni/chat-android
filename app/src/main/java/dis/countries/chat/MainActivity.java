@@ -25,7 +25,7 @@ import java.util.TimerTask;
 
 import dis.countries.chat.ui.chat.Container;
 import dis.countries.chat.ui.chat.Conversation;
-import dis.countries.chat.ui.home.Home;
+import dis.countries.chat.ui.home.Entrance;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,18 +33,18 @@ public class MainActivity extends AppCompatActivity {
     //public static TabLayout tabs;
     public static int NEW_MESSAGES = 0;
     public static boolean imOnConversationTab = true, imOnPeopleTab = false;
-    private static int ConversationTab = 1, PEOPLE = 0;
 
     public final Container chat_container = new Container(this);
-    public final Participants participants = new Participants();
+    public final Participants participants = new Participants(this);
     public final Conversation conversation = new Conversation();
-
     public static final Rooms rooms = new Rooms();
+
+    public static BottomNavigationView bottomNavigationView;
 
     public static void participantsSetBadge() {
         // tabs.getTabAt(0).getOrCreateBadge();
+
     }
-    public static BottomNavigationView bottomNavigationView;
 
     public static void updateOnlineTitle() {
 
@@ -77,18 +77,22 @@ public class MainActivity extends AppCompatActivity {
                    case R.id.home:
                        changeFragment(chat_container);
                         break;
+                   case R.id.chats:
+                       changeFragment(rooms);
+                       break;
                    case R.id.favorite:
                        changeFragment(rooms);
                        break;
                    case R.id.rooms:
                        changeFragment(rooms);
+                       break;
                }
             return true;
            }
         });
     }
 
-    private void changeFragment(Object fragment) {
+    public void changeFragment(Object fragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
         transaction.replace(R.id.contentFragment, (Fragment) fragment);
@@ -164,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openLogInScreen() {
-        startActivity( new Intent(this, Home.class));
+        startActivity( new Intent(this, Entrance.class));
     }
 
     private void hideKeyboard() {
