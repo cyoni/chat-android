@@ -38,7 +38,7 @@ public class Container extends Fragment {
         viewPager = root.findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
 
-        viewPager.setCurrentItem(1);
+        viewPager.setCurrentItem(2);
         tabs = root.findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
 

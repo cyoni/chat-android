@@ -32,6 +32,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
                 return mainActivity.participants;
             case 1:
                 return mainActivity.conversation;
+
             default:
                 return null;
         }

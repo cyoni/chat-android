@@ -73,6 +73,42 @@ function validateNickname(nickname){
             )
 }
 
+function get_account(token){
+    const auth = admin.database().ref("users").child(nickname).once('value')
+    if (auth.child("token").val() !== token)
+        return false
+    else
+        return auth
+}
+
+exports.join_to_room = functions.https.onCall(async (request, context) => {
+
+    const token = request.token
+    const nickname = request.nickname
+    const room_id = request.room_id
+    const room_password = request.room_password
+
+    if (get_account(token) === false)
+        return "AUTH-FAILED"
+
+    const room_data = does_room_exist(room_id)
+
+    if (!room_data)
+        return "ROOM-DOES-NOT-EXIST"
+    
+    if (room_data.is_require_password && !room_data.password === room_password)
+        return "WRONG-PASSWORD"
+
+    const joiningRoom = admin.database().ref("rooms").child(defaultRoom).child(nickname).set({
+        timestamp: Date.now()
+    })
+
+    await joiningRoom
+    await query
+    await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join", Date.now())
+    return "OK"
+})
+
 exports.register = functions.https.onCall(async (request, context) => {
 
     const nickname = request.nickname.trim();
@@ -92,15 +128,6 @@ exports.register = functions.https.onCall(async (request, context) => {
             room: defaultRoom,
             timestamp: Date.now()
         })
-
-
-        const joiningRoom = admin.database().ref("rooms").child(defaultRoom).child(nickname).set({
-            timestamp: Date.now()
-        })
-
-        await joiningRoom
-        await query
-        await sendMessageToAudience(defaultRoom, nickname, `** ${nickname} has joined the room **`, "join", Date.now())
 
         return token
     }

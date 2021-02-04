@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         keepMeAlive();
         listenBottomMenu();
 
-        changeFragment(chat_container);
+        changeFragment(rooms);
     }
 
     private void listenBottomMenu() {
